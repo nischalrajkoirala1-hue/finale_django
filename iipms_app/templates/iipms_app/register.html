@@ -208,5 +208,6 @@ function toggleRole() {
     }
 }
 </script>
+<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
 </body>
 </html>

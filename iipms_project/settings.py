@@ -14,7 +14,8 @@ SECRET_KEY = "django-insecure-iipms-change-this-key-before-deployment-2026"
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]   # tighten to your domain in production
+ALLOWED_HOSTS = ["*"]
+CSRF_TRUSTED_ORIGINS = ["https://iipms-django-production.up.railway.app", "http://127.0.0.1:8000"]   # tighten to your domain in production
 
 
 # ── Installed Apps ────────────────────────────────────────────
