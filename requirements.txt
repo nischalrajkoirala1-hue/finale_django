@@ -1,8 +1,10 @@
-# Install all dependencies with:
-#     pip install -r requirements.txt
-
-Django>=4.2,<5.1
-Pillow>=10.0
-whitenoise>=6.6        # serves static files in production (Railway, PythonAnywhere)
-gunicorn>=21.0         # production web server (Railway uses this)
-openpyxl>=3.1          # CSV/Excel export
+asgiref==3.11.1
+dj-database-url==3.1.2
+Django==5.2.14
+gunicorn==26.0.0
+packaging==26.2
+pillow==12.2.0
+psycopg2-binary==2.9.12
+sqlparse==0.5.5
+typing_extensions==4.15.0
+whitenoise==6.12.0
