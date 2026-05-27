@@ -118,24 +118,85 @@ def redirect_to_dashboard(user):
 # =============================================================
 
 def register_view(request):
-    """
-    GET:  Show the registration form.
-    POST: Save the new user and redirect to their dashboard.
-    """
     if request.user.is_authenticated:
         return redirect_to_dashboard(request.user)
 
-    if request.method == "POST":
-        form = RegisterForm(request.POST, request.FILES)
-        if form.is_valid():
-            user = form.save()
-            login(request, user)    # log them in straight away
-            messages.success(request, f"Welcome, {user.first_name}! Your account has been created.")
-            return redirect_to_dashboard(user)
-    else:
-        form = RegisterForm()
+    error = ""
 
-    return render(request, "iipms_app/register.html", {"form": form})
+    if request.method == "POST":
+        first_name = request.POST.get("first_name", "").strip()
+        last_name  = request.POST.get("last_name",  "").strip()
+        email      = request.POST.get("email",      "").strip().lower()
+        role       = request.POST.get("role",       "").strip()
+        password1  = request.POST.get("password1",  "")
+        password2  = request.POST.get("password2",  "")
+
+        if not first_name or not last_name or not email or not role or not password1:
+            error = "Please fill in all required fields."
+        elif password1 != password2:
+            error = "Passwords do not match."
+        elif len(password1) < 6:
+            error = "Password must be at least 6 characters."
+        elif User.objects.filter(email=email).exists():
+            error = "An account with this email already exists."
+        else:
+            base_username = email.split("@")[0]
+            username = base_username
+            counter = 1
+            while User.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+
+            user = User(
+                username   = username,
+                first_name = first_name,
+                last_name  = last_name,
+                email      = email,
+                role       = role,
+            )
+            user.set_password(password1)
+            if request.FILES.get("photo"):
+                user.photo = request.FILES["photo"]
+            user.save()
+
+            if role == "student":
+                wam_val = None
+                try:
+                    wam_raw = request.POST.get("wam", "")
+                    if wam_raw:
+                        wam_val = float(wam_raw)
+                except ValueError:
+                    pass
+                StudentProfile.objects.create(
+                    user          = user,
+                    course        = request.POST.get("course",        ""),
+                    wam           = wam_val,
+                    availability  = request.POST.get("availability",  ""),
+                    industry_pref = request.POST.get("industry_pref", ""),
+                    work_type     = request.POST.get("work_type",     ""),
+                    location_pref = request.POST.get("location_pref", ""),
+                    skills        = request.POST.get("skills",        ""),
+                    cv_file       = request.FILES.get("cv_file"),
+                )
+            elif role == "employer":
+                EmployerProfile.objects.create(
+                    user         = user,
+                    company_name = request.POST.get("company_name", first_name),
+                    industry     = request.POST.get("emp_industry", ""),
+                    website      = request.POST.get("website",      ""),
+                    abn          = request.POST.get("abn",          ""),
+                )
+            elif role == "supervisor":
+                SupervisorProfile.objects.create(
+                    user       = user,
+                    university = request.POST.get("university", ""),
+                    department = request.POST.get("department", ""),
+                )
+
+            login(request, user)
+            return redirect_to_dashboard(user)
+
+    return render(request, "iipms_app/register.html", {"error": error})
 
 
 def login_view(request):
@@ -210,51 +271,88 @@ def student_dashboard(request):
     # IDs of internships already applied to (so we can show "Applied" badge)
     applied_ids   = applications.values_list("internship_id", flat=True)
 
+    # Build internships with match scores for the browse tab
+    from .matching import rank_internships_for_student
+    ranked = rank_internships_for_student(profile, internships)
+    internships_with_scores = []
+    for r in ranked:
+        colour = "green" if r["score"] >= 70 else "orange" if r["score"] >= 40 else "red"
+        internships_with_scores.append({
+            "job":           r["internship"],
+            "score":         r["score"],
+            "bar_colour":    colour,
+            "already_applied": r["internship"].id in list(applied_ids),
+        })
+
     context = {
-        "profile":      profile,
-        "applications": applications,
-        "notifications": notifications,
-        "offers":       offers,
-        "evaluations":  evaluations,
-        "logs":         logs,
-        "unread_count": unread_count,
-        "internships":  internships,
-        "applied_ids":  list(applied_ids),
+        "profile":                profile,
+        "applications":           applications,
+        "notifications":          notifications,
+        "offers":                 offers,
+        "evaluations":            evaluations,
+        "logs":                   logs,
+        "unread_count":           unread_count,
+        "internships":            internships,
+        "internships_with_scores": internships_with_scores,
+        "applied_ids":            list(applied_ids),
+        "user":                   user,
+        "full_name":              user.get_full_name(),
+        "email":                  user.email,
     }
     return render(request, "iipms_app/student_dashboard.html", context)
 
 
 @login_required
 def student_profile_edit(request):
-    """
-    Student updates their own profile (skills, preferences, CV, etc.)
-    """
     if not require_role(request, User.ROLE_STUDENT):
         return redirect_to_dashboard(request.user)
 
     profile, _ = StudentProfile.objects.get_or_create(user=request.user)
 
+    ALL_SKILLS = {
+        "programming": ["Python","JavaScript","Java","C++","C#","TypeScript","Swift","Kotlin","Go","Rust","PHP","Ruby","R","MATLAB"],
+        "web":         ["HTML","CSS","React","Vue.js","Angular","Node.js","Django","Flask","Laravel","Next.js","Bootstrap","Tailwind CSS"],
+        "data":        ["SQL","MySQL","PostgreSQL","MongoDB","Machine Learning","Deep Learning","TensorFlow","PyTorch","Pandas","NumPy","Tableau","Power BI","Excel"],
+        "cloud":       ["AWS","Azure","Google Cloud","Docker","Kubernetes","Git","GitHub","CI/CD","Linux"],
+        "other":       ["React Native","Flutter","Android Development","iOS Development","Figma","UI/UX Design","Agile","Scrum","REST APIs","GraphQL","Cybersecurity","Networking"],
+    }
+
+    current_skills = [s.strip() for s in profile.skills.split(",") if s.strip()]
+
     if request.method == "POST":
-        form = StudentProfileForm(request.POST, request.FILES, instance=profile)
-        if form.is_valid():
-            form.save()
+        request.user.first_name = request.POST.get("first_name", request.user.first_name)
+        request.user.last_name  = request.POST.get("last_name",  request.user.last_name)
+        if request.FILES.get("photo"):
+            request.user.photo = request.FILES["photo"]
+        request.user.save()
 
-            # Also update the user's name/phone if they changed it
-            request.user.first_name = request.POST.get("first_name", request.user.first_name)
-            request.user.last_name  = request.POST.get("last_name",  request.user.last_name)
-            request.user.phone      = request.POST.get("phone",      request.user.phone)
-            if request.FILES.get("photo"):
-                request.user.photo = request.FILES["photo"]
-            request.user.save()
+        wam_val = None
+        try:
+            wam_raw = request.POST.get("wam", "")
+            if wam_raw:
+                wam_val = float(wam_raw)
+        except ValueError:
+            pass
 
-            messages.success(request, "Profile updated successfully!")
-            return redirect("student_dashboard")
-    else:
-        form = StudentProfileForm(instance=profile)
+        profile.course        = request.POST.get("course",        "")
+        profile.wam           = wam_val
+        profile.availability  = request.POST.get("availability",  "")
+        profile.skills        = request.POST.get("skills",        "")
+        profile.industry_pref = request.POST.get("industry_pref", "")
+        profile.work_type     = request.POST.get("work_type",     "")
+        profile.location_pref = request.POST.get("location_pref", "")
+        if request.FILES.get("cv_file"):
+            profile.cv_file = request.FILES["cv_file"]
+        profile.save()
+
+        messages.success(request, "Profile updated successfully!")
+        return redirect("student_dashboard")
 
     return render(request, "iipms_app/student_profile_edit.html", {
-        "form":    form,
-        "profile": profile,
+        "profile":         profile,
+        "all_skills":      ALL_SKILLS,
+        "current_skills":  current_skills,
+        "industry_choices": StudentProfile.INDUSTRY_CHOICES,
     })
 
 
@@ -545,7 +643,7 @@ def employer_dashboard(request):
     my_jobs        = Internship.objects.filter(employer=request.user)
     my_app_ids     = Application.objects.filter(internship__employer=request.user)
     hired_count    = my_app_ids.filter(status=Application.STATUS_HIRED).count()
-    my_logs        = WeeklyLog.objects.filter(company_name__iexact=profile.company_name)
+    my_logs        = WeeklyLog.objects.filter(internship__employer=request.user).order_by("-submitted_at")
 
     # Applications grouped for display
     applications   = my_app_ids.order_by("-applied_at")
@@ -556,15 +654,19 @@ def employer_dashboard(request):
         "applications": applications,
         "hired_count":  hired_count,
         "my_logs":      my_logs,
+        "user":         request.user,
+        "full_name":    request.user.get_full_name(),
+        "email":        request.user.email,
+        "company_name": profile.company_name,
+        "industry":     profile.industry,
+        "website":      profile.website,
+        "abn":          profile.abn,
     }
     return render(request, "iipms_app/employer_dashboard.html", context)
 
 
 @login_required
 def post_internship(request):
-    """
-    Employer creates a new internship listing.
-    """
     if not require_role(request, User.ROLE_EMPLOYER):
         return redirect_to_dashboard(request.user)
 
@@ -573,19 +675,43 @@ def post_internship(request):
         defaults={"company_name": request.user.get_full_name()},
     )
 
+    error = ""
     if request.method == "POST":
-        form = InternshipForm(request.POST)
-        if form.is_valid():
-            job          = form.save(commit=False)
-            job.employer = request.user
-            job.company  = profile.company_name   # use verified company name
-            job.save()
-            messages.success(request, f"Internship '{job.title}' posted successfully!")
-            return redirect("employer_dashboard")
-    else:
-        form = InternshipForm()
+        title    = request.POST.get("title",    "").strip()
+        location = request.POST.get("location", "").strip()
+        skills   = request.POST.get("skills",   "").strip()
 
-    return render(request, "iipms_app/post_internship.html", {"form": form})
+        if not title or not location:
+            error = "Please fill in the title and location."
+        elif not skills:
+            error = "Please select at least one required skill."
+        else:
+            Internship.objects.create(
+                employer    = request.user,
+                company     = profile.company_name,
+                title       = title,
+                location    = location,
+                duration    = request.POST.get("duration",    ""),
+                start_date  = request.POST.get("start_date",  ""),
+                end_date    = request.POST.get("end_date",    ""),
+                stipend     = request.POST.get("stipend",     ""),
+                work_type   = request.POST.get("work_type",   ""),
+                industry    = request.POST.get("industry",    ""),
+                description = request.POST.get("description", ""),
+                skills      = skills,
+                is_active   = True,
+            )
+            messages.success(request, f"Internship posted successfully!")
+            return redirect("employer_dashboard")
+
+    skills_data = {
+        "programming": ["Python","JavaScript","Java","C++","C#","TypeScript","Swift","Kotlin","Go","PHP","Ruby","R","MATLAB"],
+        "web":         ["HTML","CSS","React","Vue.js","Angular","Node.js","Django","Flask","Next.js","Bootstrap","Tailwind CSS"],
+        "data":        ["SQL","MySQL","PostgreSQL","MongoDB","Machine Learning","Deep Learning","TensorFlow","PyTorch","Pandas","NumPy","Tableau","Power BI","Excel"],
+        "cloud":       ["AWS","Azure","Google Cloud","Docker","Kubernetes","Git","GitHub","CI/CD","Linux"],
+        "other":       ["Figma","UI/UX Design","Agile","Scrum","REST APIs","GraphQL","Cybersecurity","Networking","React Native","Flutter"],
+    }
+    return render(request, "iipms_app/post_internship.html", {"error": error, "skills_data": skills_data})
 
 
 @login_required
@@ -662,54 +788,49 @@ def update_application_status(request, app_id):
 
 @login_required
 def issue_offer(request, app_id):
-    """
-    Employer issues a formal offer letter.
-    The officer must approve it before the student sees it.
-    """
     if not require_role(request, User.ROLE_EMPLOYER):
         return redirect_to_dashboard(request.user)
 
     app = get_object_or_404(Application, id=app_id, internship__employer=request.user)
 
     if request.method == "POST":
-        form = OfferForm(request.POST)
-        if form.is_valid():
-            offer            = form.save(commit=False)
-            offer.employer   = request.user
-            offer.student    = app.student
-            offer.internship = app.internship
-            offer.save()
+        start_date = request.POST.get("start_date", "").strip()
+        end_date   = request.POST.get("end_date",   "").strip()
+        if not start_date or not end_date:
+            messages.error(request, "Please enter start and end dates.")
+            return render(request, "iipms_app/issue_offer.html", {"app": app})
 
-            # Notify the officer to approve
-            officers = User.objects.filter(role=User.ROLE_OFFICER)
-            for officer in officers:
-                send_notification(
-                    recipient = officer,
-                    from_name = app.internship.company,
-                    subject   = f"New Offer Awaiting Approval — {app.internship.title}",
-                    message   = (
-                        f"{app.internship.company} has issued an offer to "
-                        f"{app.student.get_full_name()} for {app.internship.title}. "
-                        "Please review and approve in the Officer Dashboard."
-                    ),
-                )
+        Offer.objects.create(
+            employer   = request.user,
+            student    = app.student,
+            internship = app.internship,
+            start_date = start_date,
+            end_date   = end_date,
+            stipend    = request.POST.get("stipend", ""),
+            terms      = request.POST.get("terms",   ""),
+        )
 
-            messages.success(request, "Offer issued! Waiting for officer approval.")
-            return redirect("employer_dashboard")
-    else:
-        form = OfferForm()
+        officers = User.objects.filter(role=User.ROLE_OFFICER)
+        for officer in officers:
+            send_notification(
+                recipient = officer,
+                from_name = app.internship.company,
+                subject   = f"New Offer Awaiting Approval — {app.internship.title}",
+                message   = (
+                    f"{app.internship.company} has issued an offer to "
+                    f"{app.student.get_full_name()} for {app.internship.title}. "
+                    "Please review and approve in the Officer Dashboard."
+                ),
+            )
 
-    return render(request, "iipms_app/issue_offer.html", {
-        "form": form,
-        "app":  app,
-    })
+        messages.success(request, "Offer sent for officer approval!")
+        return redirect("employer_dashboard")
+
+    return render(request, "iipms_app/issue_offer.html", {"app": app})
 
 
 @login_required
 def submit_evaluation(request, student_id, internship_id):
-    """
-    Employer (or supervisor) submits a performance evaluation for a student.
-    """
     if not require_role(request, User.ROLE_EMPLOYER, User.ROLE_SUPERVISOR):
         return redirect_to_dashboard(request.user)
 
@@ -722,35 +843,44 @@ def submit_evaluation(request, student_id, internship_id):
         else Evaluation.FROM_SUPERVISOR
     )
 
+    RATINGS = [
+        ("rating_conduct",       "Professional Conduct"),
+        ("rating_technical",     "Technical Ability"),
+        ("rating_communication", "Communication Skills"),
+        ("rating_overall",       "Overall Performance"),
+    ]
+
     if request.method == "POST":
-        form = EvaluationForm(request.POST)
-        if form.is_valid():
-            ev            = form.save(commit=False)
-            ev.evaluator  = request.user
-            ev.student    = student
-            ev.internship = internship
-            ev.from_role  = from_role
-            ev.save()
+        Evaluation.objects.create(
+            evaluator            = request.user,
+            student              = student,
+            internship           = internship,
+            from_role            = from_role,
+            rating_conduct       = int(request.POST.get("rating_conduct",       3)),
+            rating_technical     = int(request.POST.get("rating_technical",     3)),
+            rating_communication = int(request.POST.get("rating_communication", 3)),
+            rating_overall       = int(request.POST.get("rating_overall",       3)),
+            comments             = request.POST.get("comments",      ""),
+            recommendation       = request.POST.get("recommendation", ""),
+        )
 
-            send_notification(
-                recipient = student,
-                from_name = request.user.get_full_name(),
-                subject   = f"New Evaluation — {internship.title}",
-                message   = (
-                    f"An evaluation has been submitted for your internship at "
-                    f"{internship.company}. View it in your Student Portal."
-                ),
-            )
+        send_notification(
+            recipient = student,
+            from_name = request.user.get_full_name(),
+            subject   = f"New Evaluation — {internship.title}",
+            message   = (
+                f"An evaluation has been submitted for your internship at "
+                f"{internship.company}. View it in your Student Portal."
+            ),
+        )
 
-            messages.success(request, "Evaluation submitted successfully!")
-            return redirect("employer_dashboard")
-    else:
-        form = EvaluationForm()
+        messages.success(request, "Evaluation submitted!")
+        return redirect("employer_dashboard")
 
     return render(request, "iipms_app/submit_evaluation.html", {
-        "form":      form,
-        "student":   student,
+        "student":    student,
         "internship": internship,
+        "ratings":    RATINGS,
     })
 
 
@@ -801,7 +931,10 @@ def officer_dashboard(request):
         "completions":       completions,
         "assignments":       assignments,
         "supervisors":       supervisors,
-        "student_profiles":  student_profiles,
+        "student_profiles":  list(student_profiles),
+        "user":              request.user,
+        "full_name":         request.user.get_full_name(),
+        "email":             request.user.email,
     }
     return render(request, "iipms_app/officer_dashboard.html", context)
 

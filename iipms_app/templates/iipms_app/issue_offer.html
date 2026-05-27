@@ -1,0 +1,57 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Issue Offer - IIPMS</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .form-container{max-width:600px;margin:30px auto;background:white;padding:30px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+        input,textarea,select{width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;outline:none;font-family:Arial,sans-serif;}
+        textarea{resize:vertical;}
+        .save-btn{width:100%;padding:12px;background:#22c55e;color:white;border:none;border-radius:6px;font-size:16px;cursor:pointer;margin-top:15px;}
+    </style>
+</head>
+<body>
+<header class="navbar">
+    <div class="logo">IIPMS</div>
+    <nav><ul>
+        <li><a href="/employer/">Dashboard</a></li>
+        <li><a href="/logout/">Logout</a></li>
+    </ul></nav>
+</header>
+
+<div style="max-width:600px;margin:30px auto;padding:0 20px;">
+    <div class="form-container">
+        <h2 style="margin-bottom:6px;">📄 Issue Offer Letter</h2>
+        <p style="color:#555;font-size:14px;margin-bottom:20px;">
+            Sending offer to: <strong>{{ app.student.get_full_name }}</strong><br>
+            For: <strong>{{ app.internship.title }}</strong>
+        </p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="input-group" style="margin-bottom:15px;">
+                <label><strong>Start Date *</strong></label>
+                <input type="text" name="start_date" required placeholder="e.g. 1 July 2026" style="margin-top:6px;">
+            </div>
+            <div class="input-group" style="margin-bottom:15px;">
+                <label><strong>End Date *</strong></label>
+                <input type="text" name="end_date" required placeholder="e.g. 30 September 2026" style="margin-top:6px;">
+            </div>
+            <div class="input-group" style="margin-bottom:15px;">
+                <label><strong>Stipend / Pay</strong></label>
+                <input type="text" name="stipend" placeholder="e.g. $600/week or Unpaid" style="margin-top:6px;">
+            </div>
+            <div class="input-group" style="margin-bottom:15px;">
+                <label><strong>Terms & Conditions</strong></label>
+                <textarea name="terms" rows="4" placeholder="Any specific terms, conditions or requirements..." style="margin-top:6px;"></textarea>
+            </div>
+            <button type="submit" class="save-btn">✅ Send Offer for Approval</button>
+            <p style="text-align:center;margin-top:12px;"><a href="/employer/" style="color:#4f6ef7;">← Cancel</a></p>
+        </form>
+    </div>
+</div>
+<footer><p>© 2026 IIPMS</p></footer>
+</body>
+</html>

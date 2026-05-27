@@ -7,210 +7,206 @@
     <title>Register - IIPMS</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-        .error-box { background:#fee2e2;border:1.5px solid #ef4444;color:#b91c1c;padding:10px 14px;border-radius:8px;font-size:14px;margin-top:12px; }
-        .field-errors { color:#b91c1c;font-size:13px;margin-top:4px; }
-        .skill-pills { display:flex;flex-wrap:wrap;gap:6px;margin-top:6px; }
-        .skill-pill { background:#e8ecff;color:#4f6ef7;padding:4px 10px;border-radius:12px;font-size:12px;cursor:pointer;border:1.5px solid transparent; }
-        .skill-pill.selected { background:#4f6ef7;color:white; }
-        #skillsInput { width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;outline:none; }
-        .role-section { display:none; }
-        .role-section.active { display:block; }
+        .error-box{background:#fee2e2;border:1.5px solid #ef4444;color:#b91c1c;padding:10px 14px;border-radius:8px;font-size:14px;margin-bottom:16px;}
+        .role-section{display:none;}
+        .role-section.active{display:block;}
+        select{width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;outline:none;background:#fff;}
     </style>
 </head>
 <body>
-    <!-- Django flash messages (success/error banners) -->
-    {% if messages %}
-    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
-        {% for message in messages %}
-        <div style="background:{% if message.tags == 'success' %}#dcfce7{% elif message.tags == 'danger' %}#fee2e2{% else %}#fef9c3{% endif %};
-                    border-radius:8px;padding:12px 16px;margin-bottom:8px;
-                    color:{% if message.tags == 'success' %}#15803d{% elif message.tags == 'danger' %}#b91c1c{% else %}#a16207{% endif %};
-                    font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            {{ message }}
+
+<header class="navbar">
+    <div class="logo">IIPMS</div>
+    <nav><ul>
+        <li><a href="/">Home</a></li>
+        <li><a href="/about/">About</a></li>
+        <li><a href="/login/" class="btn">Login</a></li>
+    </ul></nav>
+</header>
+
+<section class="register-section">
+    <div class="register-container">
+        <div class="register-form-box">
+            <h1>Create Account</h1>
+            <p class="subtitle">Join IIPMS to start your internship journey</p>
+
+            {% if error %}
+            <div class="error-box">{{ error }}</div>
+            {% endif %}
+
+            {% for message in messages %}
+            <div class="error-box">{{ message }}</div>
+            {% endfor %}
+
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>First Name *</label>
+                        <input type="text" name="first_name" required placeholder="First name">
+                    </div>
+                    <div class="input-group">
+                        <label>Last Name *</label>
+                        <input type="text" name="last_name" required placeholder="Last name">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Email Address *</label>
+                    <input type="email" name="email" required placeholder="your@email.com">
+                </div>
+
+                <div class="input-group">
+                    <label>Register As *</label>
+                    <select name="role" id="roleSelect" onchange="toggleRole()">
+                        <option value="">-- Select your role --</option>
+                        <option value="student">Student</option>
+                        <option value="employer">Employer / Industry Partner</option>
+                        <option value="officer">Placement Officer</option>
+                        <option value="supervisor">Academic Supervisor</option>
+                    </select>
+                </div>
+
+                <!-- Student fields -->
+                <div class="role-section" id="section-student">
+                    <div class="input-group">
+                        <label>Course / Degree</label>
+                        <input type="text" name="course" placeholder="e.g. Bachelor of Computer Science">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>WAM / GPA</label>
+                            <input type="number" name="wam" step="0.01" placeholder="e.g. 75.5">
+                        </div>
+                        <div class="input-group">
+                            <label>Availability</label>
+                            <input type="text" name="availability" placeholder="e.g. July 2026">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Your Skills (comma-separated)</label>
+                        <input type="text" name="skills" placeholder="e.g. Python, SQL, Excel">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Preferred Industry</label>
+                            <select name="industry_pref">
+                                <option value="">No preference</option>
+                                <option value="Technology">Technology / IT</option>
+                                <option value="Finance">Finance / Banking</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Education">Education</option>
+                                <option value="Any">Open to Any</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Work Type</label>
+                            <select name="work_type">
+                                <option value="">No preference</option>
+                                <option value="Remote">Remote</option>
+                                <option value="On-site">On-site</option>
+                                <option value="Hybrid">Hybrid</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Location Preference</label>
+                        <input type="text" name="location_pref" placeholder="e.g. Sydney">
+                    </div>
+                    <div class="input-group">
+                        <label>Upload CV (optional)</label>
+                        <input type="file" name="cv_file" accept=".pdf,.doc,.docx">
+                    </div>
+                </div>
+
+                <!-- Employer fields -->
+                <div class="role-section" id="section-employer">
+                    <div class="input-group">
+                        <label>Company Name *</label>
+                        <input type="text" name="company_name" placeholder="e.g. TechCorp">
+                    </div>
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Industry</label>
+                            <input type="text" name="emp_industry" placeholder="e.g. Technology">
+                        </div>
+                        <div class="input-group">
+                            <label>ABN</label>
+                            <input type="text" name="abn" placeholder="e.g. 12 345 678 901">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Website</label>
+                        <input type="text" name="website" placeholder="e.g. www.company.com.au">
+                    </div>
+                </div>
+
+                <!-- Officer fields -->
+                <div class="role-section" id="section-officer">
+                    <div class="input-group">
+                        <label>Department</label>
+                        <input type="text" name="department" placeholder="e.g. Careers & Employability">
+                    </div>
+                </div>
+
+                <!-- Supervisor fields -->
+                <div class="role-section" id="section-supervisor">
+                    <div class="input-group">
+                        <label>University</label>
+                        <input type="text" name="university" placeholder="e.g. University of Technology Sydney">
+                    </div>
+                    <div class="input-group">
+                        <label>Department</label>
+                        <input type="text" name="department" placeholder="e.g. School of Computer Science">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Profile Photo (optional)</label>
+                    <input type="file" name="photo" accept="image/*">
+                </div>
+
+                <div class="input-row">
+                    <div class="input-group">
+                        <label>Password *</label>
+                        <input type="password" name="password1" required placeholder="Min 6 characters">
+                    </div>
+                    <div class="input-group">
+                        <label>Confirm Password *</label>
+                        <input type="password" name="password2" required placeholder="Repeat password">
+                    </div>
+                </div>
+
+                <button type="submit" class="register-btn">Create Account</button>
+
+                <p class="register-text" style="text-align:center;margin-top:14px;">
+                    Already have an account? <a href="/login/">Sign in</a>
+                </p>
+            </form>
         </div>
-        {% endfor %}
+
+        <div class="register-image">
+            <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80" alt="Register">
+        </div>
     </div>
-    {% endif %}
+</section>
 
+<footer><p>© 2026 IIPMS | Registration</p></footer>
 
-    <header class="navbar">
-        <div class="logo">IIPMS</div>
-        <nav>
-            <ul>
-                <li><a href="{% url 'home' %}">Home</a></li>
-                <li><a href="{% url 'about' %}">About</a></li>
-                <li><a href="{% url 'login' %}" class="btn">Login</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <section class="register-section">
-        <div class="register-container">
-            <div class="register-form-box">
-                <h1>Create Account</h1>
-                <p class="subtitle">Join IIPMS to start your internship journey</p>
-
-                {% if form.errors %}
-                    <div class="error-box">
-                        Please fix the errors below.
-                    </div>
-                {% endif %}
-
-                {% for message in messages %}
-                    <div class="error-box">{{ message }}</div>
-                {% endfor %}
-
-                <form method="POST" enctype="multipart/form-data">
-                    {% csrf_token %}
-
-                    <div class="input-row">
-                        <div class="input-group">
-                            <label>First Name *</label>
-                            {{ form.first_name }}
-                            {% if form.first_name.errors %}<div class="field-errors">{{ form.first_name.errors }}</div>{% endif %}
-                        </div>
-                        <div class="input-group">
-                            <label>Last Name *</label>
-                            {{ form.last_name }}
-                            {% if form.last_name.errors %}<div class="field-errors">{{ form.last_name.errors }}</div>{% endif %}
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Email Address *</label>
-                        {{ form.email }}
-                        {% if form.email.errors %}<div class="field-errors">{{ form.email.errors }}</div>{% endif %}
-                    </div>
-
-                    <div class="input-group">
-                        <label>Register As *</label>
-                        {{ form.role }}
-                        {% if form.role.errors %}<div class="field-errors">{{ form.role.errors }}</div>{% endif %}
-                    </div>
-
-                    <!-- Student fields -->
-                    <div class="role-section" id="section-student">
-                        <div class="input-group">
-                            <label>Course / Degree</label>
-                            {{ form.course }}
-                        </div>
-                        <div class="input-row">
-                            <div class="input-group">
-                                <label>WAM / GPA</label>
-                                {{ form.wam }}
-                            </div>
-                            <div class="input-group">
-                                <label>Availability</label>
-                                {{ form.availability }}
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label>Your Skills (comma-separated)</label>
-                            {{ form.skills }}
-                        </div>
-                        <div class="input-row">
-                            <div class="input-group">
-                                <label>Preferred Industry</label>
-                                {{ form.industry_pref }}
-                            </div>
-                            <div class="input-group">
-                                <label>Work Type</label>
-                                {{ form.work_type }}
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label>Location Preference</label>
-                            {{ form.location_pref }}
-                        </div>
-                        <div class="input-group">
-                            <label>Upload CV (optional)</label>
-                            {{ form.cv_file }}
-                        </div>
-                    </div>
-
-                    <!-- Employer fields -->
-                    <div class="role-section" id="section-employer">
-                        <div class="input-group">
-                            <label>Company Name</label>
-                            {{ form.company_name }}
-                        </div>
-                        <div class="input-row">
-                            <div class="input-group">
-                                <label>Industry</label>
-                                {{ form.emp_industry }}
-                            </div>
-                            <div class="input-group">
-                                <label>ABN</label>
-                                {{ form.abn }}
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label>Website</label>
-                            {{ form.website }}
-                        </div>
-                    </div>
-
-                    <!-- Supervisor fields -->
-                    <div class="role-section" id="section-supervisor">
-                        <div class="input-group">
-                            <label>University</label>
-                            {{ form.university }}
-                        </div>
-                        <div class="input-group">
-                            <label>Department</label>
-                            {{ form.department }}
-                        </div>
-                    </div>
-
-                    <div class="input-group">
-                        <label>Profile Photo (optional)</label>
-                        {{ form.photo }}
-                    </div>
-
-                    <div class="input-row">
-                        <div class="input-group">
-                            <label>Password *</label>
-                            {{ form.password1 }}
-                            {% if form.password1.errors %}<div class="field-errors">{{ form.password1.errors }}</div>{% endif %}
-                        </div>
-                        <div class="input-group">
-                            <label>Confirm Password *</label>
-                            {{ form.password2 }}
-                            {% if form.password2.errors %}<div class="field-errors">{{ form.password2.errors }}</div>{% endif %}
-                        </div>
-                    </div>
-
-                    <button type="submit" class="register-btn">Create Account</button>
-
-                    <p class="register-text" style="text-align:center;margin-top:14px;">
-                        Already have an account? <a href="{% url 'login' %}">Sign in</a>
-                    </p>
-                </form>
-            </div>
-
-            <div class="register-image">
-                <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80" alt="Register">
-            </div>
-        </div>
-    </section>
-
-    <footer><p>© 2026 IIPMS | Registration</p></footer>
-
-    <script>
-        // Show/hide role-specific fields when role dropdown changes
-        var roleSelect = document.querySelector('[name="role"]');
-        function toggleRoleFields() {
-            document.querySelectorAll('.role-section').forEach(function(el) { el.classList.remove('active'); });
-            var val = roleSelect.value;
-            if (val === 'student')    document.getElementById('section-student').classList.add('active');
-            if (val === 'employer')   document.getElementById('section-employer').classList.add('active');
-            if (val === 'supervisor') document.getElementById('section-supervisor').classList.add('active');
-        }
-        if (roleSelect) {
-            roleSelect.addEventListener('change', toggleRoleFields);
-            toggleRoleFields();
-        }
-    </script>
-<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
+<script>
+function toggleRole() {
+    var val = document.getElementById('roleSelect').value;
+    document.querySelectorAll('.role-section').forEach(function(el) {
+        el.classList.remove('active');
+    });
+    if (val) {
+        var sec = document.getElementById('section-' + val);
+        if (sec) sec.classList.add('active');
+    }
+}
+</script>
 </body>
 </html>

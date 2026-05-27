@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,486 +8,350 @@
     <title>Student Dashboard - IIPMS</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-        .avatar-circle { width:80px;height:80px;border-radius:50%;background:#e8ecff;border:3px solid #4f6ef7;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 10px;overflow:hidden; }
-        .avatar-circle img { width:100%;height:100%;object-fit:cover; }
-        .skill-badge { display:inline-block;background:#e8ecff;color:#4f6ef7;padding:3px 10px;border-radius:20px;font-size:12px;margin:2px; }
-        .skill-tag { display:inline-block;background:#4f6ef7;color:white;padding:4px 12px;border-radius:20px;font-size:13px;margin:3px; }
-        .skill-suggestion { display:inline-block;border:1.5px solid #4f6ef7;color:#4f6ef7;padding:3px 10px;border-radius:20px;font-size:12px;margin:3px;cursor:pointer;background:white; }
-        .skill-suggestion:hover { background:#4f6ef7;color:white; }
-        .tab-btn { padding:8px 16px;border:1.5px solid #ddd;border-radius:20px;background:white;cursor:pointer;font-size:13px;font-weight:bold;color:#555;margin-right:6px;margin-bottom:10px; }
-        .tab-btn.active { background:#4f6ef7;color:white;border-color:#4f6ef7; }
-        .tab-panel { display:none; }
-        .tab-panel.active { display:block; }
-        .bar-bg { background:#eee;border-radius:8px;height:10px;margin:5px 0 10px; }
-        .bar-fill { height:10px;border-radius:8px; }
-        .bar-green { background:#22c55e; }
-        .bar-orange { background:#f59e0b; }
-        .bar-red { background:#ef4444; }
-        .badge { display:inline-block;padding:3px 12px;border-radius:12px;font-size:12px;font-weight:bold; }
-        .badge-pending { background:#fef9c3;color:#a16207; }
-        .badge-interview { background:#dbeafe;color:#1d4ed8; }
-        .badge-hired { background:#dcfce7;color:#15803d; }
-        .badge-rejected { background:#fee2e2;color:#b91c1c; }
-        .badge-other { background:#ede9fe;color:#6d28d9; }
-        .info-box { border-radius:8px;padding:9px 13px;margin-top:8px;font-size:13px; }
-        .box-blue { background:#eff6ff;border:1px solid #bfdbfe; }
-        .box-green { background:#f0fdf4;border:1px solid #bbf7d0; }
-        .box-red { background:#fff1f2;border:1px solid #fecdd3; }
-        .box-yellow { background:#fefce8;border:1px solid #fef08a; }
-        .btn-accept { padding:7px 14px;background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:8px;cursor:pointer;font-size:13px;margin-right:6px; }
-        .btn-decline { padding:7px 14px;background:#fee2e2;color:#b91c1c;border:1.5px solid #fca5a5;border-radius:8px;cursor:pointer;font-size:13px; }
-        .notif-card { background:white;border-radius:10px;padding:14px 16px;margin-bottom:10px;border-left:4px solid #4f6ef7;box-shadow:0 1px 5px rgba(0,0,0,0.06); }
-        .notif-card.unread { border-left-color:#f59e0b;background:#fffbeb; }
-        .btn-read { padding:5px 12px;background:#e8ecff;color:#4f6ef7;border:1.5px solid #c7d2fe;border-radius:6px;cursor:pointer;font-size:12px; }
-        .btn-delete { padding:5px 12px;background:#fee2e2;color:#b91c1c;border:1.5px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:12px; }
-        .btn-mark-all { padding:7px 16px;background:#f0f2ff;color:#4f6ef7;border:1.5px solid #c7d2fe;border-radius:8px;cursor:pointer;font-size:13px;margin-bottom:14px; }
-        .popup-bg { display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:999;justify-content:center;align-items:center; }
-        .popup-bg.show { display:flex; }
-        .popup-box { background:white;border-radius:14px;padding:28px;width:90%;max-width:460px;max-height:80vh;overflow-y:auto; }
-        .skill-pill { display:inline-block;background:#e8ecff;color:#4f6ef7;padding:2px 9px;border-radius:12px;font-size:11px;margin:2px; }
-        .msg-success { background:#dcfce7;color:#15803d; }
-        .msg-danger { background:#fee2e2;color:#b91c1c; }
-        .msg-other { background:#fef9c3;color:#a16207; }
+        .tab-btn{padding:9px 18px;background:#f1f5f9;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-right:6px;margin-bottom:8px;transition:all 0.2s;}
+        .tab-btn.active{background:#4f6ef7;color:white;}
+        .tab-btn:hover{background:#e2e8f0;}
+        .tab-btn.active:hover{background:#3b5bdb;}
+        .tab-panel{display:none;}
+        .tab-panel.active{display:block;}
+        .job-card{background:white;padding:16px;border-radius:10px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);border-left:4px solid #4f6ef7;}
+        .app-card{background:white;padding:16px;border-radius:10px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+        .notif-card{background:white;padding:14px;border-radius:10px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,0.06);border-left:4px solid #4f6ef7;}
+        .notif-card.unread{border-left-color:#f59e0b;background:#fffbeb;}
+        .offer-card{background:white;padding:16px;border-radius:10px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);border-left:4px solid #22c55e;}
+        .eval-card{background:white;padding:16px;border-radius:10px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,0.07);border-left:4px solid #f59e0b;}
+        .badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;}
+        .skill-pill{display:inline-block;background:#e8ecff;color:#4f6ef7;padding:2px 8px;border-radius:10px;font-size:11px;margin:2px;}
+        .match-bar-bg{background:#eee;border-radius:8px;height:8px;margin:4px 0;}
+        .apply-btn{padding:7px 16px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;}
+        .apply-btn:hover{background:#3b5bdb;}
+        .applied-badge{padding:7px 14px;background:#dcfce7;color:#15803d;border-radius:8px;font-size:13px;font-weight:bold;}
+        .action-btn{padding:6px 14px;border:none;border-radius:6px;cursor:pointer;font-size:13px;margin-right:6px;margin-top:6px;}
+        .btn-accept{background:#dcfce7;color:#15803d;border:1.5px solid #86efac;}
+        .btn-decline{background:#fee2e2;color:#b91c1c;border:1.5px solid #fca5a5;}
+        .search-box{width:100%;padding:11px 16px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:14px;outline:none;}
+        .search-box:focus{border-color:#4f6ef7;}
+        .stars{color:#f59e0b;font-size:16px;}
+        .unread-dot{width:8px;height:8px;background:#ef4444;border-radius:50%;display:inline-block;margin-left:4px;}
     </style>
 </head>
 <body>
-    <!-- Django flash messages (success/error banners) -->
-    {% if messages %}
-    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
-        {% for message in messages %}
-        <div class="{% if message.tags == 'success' %}msg-success{% elif message.tags == 'danger' %}msg-danger{% else %}msg-other{% endif %}"
-             style="border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
 <header class="navbar">
     <div class="logo">IIPMS</div>
     <nav><ul>
-        <li><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
-        <li><a href="{% url 'internship_list' %}">Internships</a></li>
-        <li><a href="{% url 'matches' %}">Matches</a></li>
-        <li><a href="{% url 'weekly_log' %}">Logs</a></li>
-<li><a href="/logout/" class="btn">Logout</a></li>    </ul></nav>
+        <li><a href="/student/">Dashboard</a></li>
+        <li><a href="/student/internships/">Internships</a></li>
+        <li><a href="/student/matches/">Matches</a></li>
+        <li><a href="/student/log/">Logs</a></li>
+        <li><a href="/logout/" class="btn">Logout</a></li>
+    </ul></nav>
 </header>
 
-<section class="dashboard">
-    <!-- Profile Card -->
+{% if messages %}
+<div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
+    {% for message in messages %}
+    <div style="background:{% if message.tags == 'success' %}#dcfce7{% else %}#fee2e2{% endif %};border-radius:8px;padding:12px 16px;margin-bottom:8px;color:{% if message.tags == 'success' %}#15803d{% else %}#b91c1c{% endif %};font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="dashboard">
+
+    <!-- PROFILE CARD -->
     <div class="profile-card">
-        <div class="avatar-circle" id="profileAvatar">🎓</div>
-        <h2 id="profileName">—</h2>
-        <p id="profileEmail" style="font-size:13px;color:#888;"></p>
-        <p id="profileCourse" style="font-size:12px;color:#aaa;margin-top:4px;"></p>
-        <div style="margin-top:10px;">
-            <strong style="font-size:13px;">My Skills:</strong>
-            <div id="skillBadges" style="margin-top:6px;"></div>
+        <div class="avatar-circle">
+            {% if user.photo %}<img src="{{ user.photo.url }}" alt="Photo">{% else %}🎓{% endif %}
         </div>
-        <button onclick="openSkillPopup()" style="margin-top:12px;padding:7px 16px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;">✏️ Edit Skills</button>
+        <h2>{{ full_name }}</h2>
+        <p style="font-size:13px;color:#888;">{{ email }}</p>
+        <p style="font-size:12px;color:#aaa;margin-top:4px;">{{ profile.course }}</p>
+        {% if profile.wam %}<p style="font-size:12px;color:#aaa;">WAM: {{ profile.wam }}</p>{% endif %}
+
+        <div style="margin-top:10px;">
+            <strong style="font-size:13px;">Skills:</strong>
+            <div style="margin-top:6px;">
+                {% if profile.skills %}
+                    {% for skill in profile.skills|split_comma %}
+                    <span class="skill-pill">{{ skill }}</span>
+                    {% endfor %}
+                {% else %}
+                    <span style="font-size:12px;color:#aaa;">No skills added</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if profile.industry_pref %}<p style="font-size:12px;color:#aaa;margin-top:6px;">🏢 {{ profile.industry_pref }}</p>{% endif %}
+        {% if profile.work_type %}<p style="font-size:12px;color:#aaa;">💼 {{ profile.work_type }}</p>{% endif %}
+        {% if profile.location_pref %}<p style="font-size:12px;color:#aaa;">📍 {{ profile.location_pref }}</p>{% endif %}
+
+        <a href="/student/profile/edit/" style="display:block;margin-top:12px;padding:8px;background:#4f6ef7;color:white;border-radius:8px;text-align:center;text-decoration:none;font-size:13px;">✏️ Edit Profile</a>
     </div>
 
+    <!-- MAIN CONTENT -->
     <div class="dashboard-content">
+
+        <!-- STATS -->
         <div class="stats">
-            <div class="stat-box"><h3 id="statApps">0</h3><p>Applications</p></div>
-            <div class="stat-box"><h3 id="statNotifs">0</h3><p>New Notifications</p></div>
-            <div class="stat-box"><h3 id="statLogs">0</h3><p>Logs Submitted</p></div>
+            <div class="stat-box"><h3>{{ applications.count }}</h3><p>Applications</p></div>
+            <div class="stat-box"><h3>{{ unread_count }}{% if unread_count > 0 %}<span class="unread-dot"></span>{% endif %}</h3><p>Notifications</p></div>
+            <div class="stat-box"><h3>{{ logs.count }}</h3><p>Logs</p></div>
         </div>
 
-        <div style="margin-top:18px;">
+        <!-- TABS -->
+        <div style="margin-top:18px;flex-wrap:wrap;display:flex;">
             <button class="tab-btn active" onclick="showTab('internships',this)">🔍 Browse Internships</button>
             <button class="tab-btn" onclick="showTab('applications',this)">📋 My Applications</button>
-            <button class="tab-btn" onclick="showTab('notifications',this)">🔔 Notifications</button>
+            <button class="tab-btn" onclick="showTab('notifications',this)">🔔 Notifications {% if unread_count > 0 %}<span style="background:#ef4444;color:white;border-radius:10px;padding:1px 6px;font-size:11px;">{{ unread_count }}</span>{% endif %}</button>
             <button class="tab-btn" onclick="showTab('offers',this)">📜 Offers</button>
             <button class="tab-btn" onclick="showTab('evals',this)">⭐ My Evaluations</button>
         </div>
 
         <!-- TAB 1: BROWSE INTERNSHIPS -->
         <div class="tab-panel active" id="tab-internships">
-            <h2 style="margin-bottom:14px;">Browse Internships</h2>
-            <input type="text" id="searchInput" placeholder="Search by title, company or skill..." onkeyup="showInternships()"
-                style="width:100%;padding:11px 14px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;margin-bottom:16px;box-sizing:border-box;">
-            <div id="internshipList"></div>
+            <div style="margin:16px 0 12px;display:flex;justify-content:space-between;align-items:center;">
+                <h3>Available Internships ({{ internships_with_scores|length }})</h3>
+                <a href="/student/matches/" style="font-size:13px;color:#4f6ef7;">View smart matches →</a>
+            </div>
+            <input type="text" class="search-box" id="jobSearch" placeholder="🔍 Search by title, company or skill..." onkeyup="filterJobs()">
+            <div id="jobCards">
+                {% for item in internships_with_scores %}
+                <div class="job-card" data-search="{{ item.job.title|lower }} {{ item.job.company|lower }} {{ item.job.skills|lower }} {{ item.job.location|lower }}">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+                        <div style="flex:1;">
+                            <p style="font-weight:bold;font-size:15px;margin:0 0 4px;">{{ item.job.title }}</p>
+                            <p style="font-size:13px;color:#555;margin:2px 0;">
+                                🏢 {{ item.job.company }} &nbsp;|&nbsp; 📍 {{ item.job.location }}
+                                {% if item.job.duration %}&nbsp;|&nbsp; ⏱ {{ item.job.duration }}{% endif %}
+                                {% if item.job.stipend %}&nbsp;|&nbsp; 💰 {{ item.job.stipend }}{% endif %}
+                            </p>
+                            <div style="margin:6px 0;">
+                                {% for skill in item.job.skills|split_comma %}
+                                <span class="skill-pill">{{ skill }}</span>
+                                {% endfor %}
+                            </div>
+                            {% if item.job.description %}<p style="font-size:13px;color:#666;margin:4px 0;">{{ item.job.description }}</p>{% endif %}
+                            <p style="font-size:12px;color:#666;margin:4px 0;">Skill match: <strong>{{ item.score }}%</strong></p>
+                            <div class="match-bar-bg">
+                                <div style="height:8px;border-radius:8px;width:{{ item.score }}%;background:{% if item.bar_colour == 'green' %}#22c55e{% elif item.bar_colour == 'orange' %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+                            </div>
+                        </div>
+                        <div style="flex-shrink:0;padding-top:4px;">
+                            {% if item.already_applied %}
+                            <span class="applied-badge">✓ Applied</span>
+                            {% else %}
+                            <form method="POST" action="/student/apply/{{ item.job.id }}/">
+                                {% csrf_token %}
+                                <button type="submit" class="apply-btn">Apply</button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div style="text-align:center;padding:40px;color:#aaa;">
+                    <p style="font-size:36px;">🔍</p>
+                    <p style="font-size:15px;margin-top:8px;">No internships available right now.</p>
+                    <p style="font-size:13px;">Check back soon or update your profile to improve matches.</p>
+                </div>
+                {% endfor %}
+            </div>
         </div>
 
         <!-- TAB 2: MY APPLICATIONS -->
         <div class="tab-panel" id="tab-applications">
-            <h2 style="margin-bottom:14px;">My Applications</h2>
-            <div id="myApplications"><p style="color:#aaa;">No applications yet.</p></div>
+            <h3 style="margin:16px 0 12px;">My Applications ({{ applications.count }})</h3>
+            {% for app in applications %}
+            <div class="app-card" style="border-left:4px solid {% if app.status == 'Hired' %}#22c55e{% elif app.status == 'Rejected' or app.status == 'Withdrawn' %}#ef4444{% elif app.status == 'Interview Scheduled' %}#6366f1{% elif app.status == 'Offer Extended' %}#ec4899{% else %}#4f6ef7{% endif %};">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <p style="font-weight:bold;font-size:15px;margin:0 0 3px;">{{ app.internship.title }}</p>
+                        <p style="font-size:13px;color:#555;">🏢 {{ app.internship.company }} &nbsp;|&nbsp; 📍 {{ app.internship.location }}</p>
+                        <p style="font-size:12px;color:#aaa;margin-top:3px;">Applied: {{ app.applied_at|date:"d M Y" }}</p>
+                        {% if app.interview_date %}
+                        <p style="font-size:13px;color:#6366f1;margin-top:4px;">📅 Interview: {{ app.interview_date }}</p>
+                        {% if app.interview_note %}<p style="font-size:12px;color:#555;">{{ app.interview_note }}</p>{% endif %}
+                        {% endif %}
+                        {% if app.officer_next_step %}
+                        <p style="font-size:12px;color:#4f6ef7;margin-top:4px;">📌 Next step: {{ app.officer_next_step }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <span class="badge" style="background:{% if app.status == 'Hired' %}#dcfce7;color:#15803d{% elif app.status == 'Rejected' %}#fee2e2;color:#b91c1c{% elif app.status == 'Interview Scheduled' %}#e0e7ff;color:#4338ca{% elif app.status == 'Offer Extended' %}#fce7f3;color:#be185d{% elif app.status == 'Withdrawn' %}#f1f5f9;color:#888{% else %}#fef9c3;color:#a16207{% endif %};">{{ app.status }}</span>
+                    </div>
+                </div>
+
+                <!-- Action buttons based on status -->
+                <div style="margin-top:10px;">
+                {% if app.status == 'Interview Scheduled' and not app.student_response %}
+                    <form method="POST" action="/student/respond/app/{{ app.id }}/" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="response" value="Accepted Interview">
+                        <button type="submit" class="action-btn btn-accept">✅ Accept Interview</button>
+                    </form>
+                    <form method="POST" action="/student/respond/app/{{ app.id }}/" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="response" value="Declined Interview">
+                        <button type="submit" class="action-btn btn-decline">✗ Decline Interview</button>
+                    </form>
+                {% elif app.status == 'Offer Extended' and not app.student_response %}
+                    <form method="POST" action="/student/respond/app/{{ app.id }}/" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="response" value="Accepted Offer">
+                        <button type="submit" class="action-btn btn-accept">🎉 Accept Offer</button>
+                    </form>
+                    <form method="POST" action="/student/respond/app/{{ app.id }}/" style="display:inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="response" value="Declined Offer">
+                        <button type="submit" class="action-btn btn-decline">✗ Decline Offer</button>
+                    </form>
+                {% elif app.student_response %}
+                    <span style="font-size:13px;color:#4f6ef7;">↩ Your response: {{ app.student_response }}</span>
+                {% endif %}
+
+                {% if app.status == 'Pending' or app.status == 'Under Review' %}
+                    <form method="POST" action="/student/withdraw/{{ app.id }}/" style="display:inline;" onsubmit="return confirm('Withdraw this application?')">
+                        {% csrf_token %}
+                        <button type="submit" class="action-btn btn-decline">Withdraw</button>
+                    </form>
+                {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:40px;color:#aaa;">
+                <p style="font-size:36px;">📋</p>
+                <p>No applications yet. Browse internships to apply!</p>
+            </div>
+            {% endfor %}
         </div>
 
         <!-- TAB 3: NOTIFICATIONS -->
         <div class="tab-panel" id="tab-notifications">
-            <h2 style="margin-bottom:10px;">Notifications</h2>
-            <p style="font-size:13px;color:#666;margin-bottom:10px;">Messages from employers and your placement officer appear here.</p>
-            <button class="btn-mark-all" onclick="markAllRead()">✓ Mark All as Read</button>
-            <div id="notificationsList"><p style="color:#888;">No notifications yet.</p></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:16px 0 12px;">
+                <h3>Notifications ({{ notifications.count }})</h3>
+                {% if unread_count > 0 %}
+                <form method="POST" action="/notifications/read-all/">
+                    {% csrf_token %}
+                    <button type="submit" style="padding:6px 14px;background:#f1f5f9;border:none;border-radius:6px;cursor:pointer;font-size:13px;">✓ Mark all read</button>
+                </form>
+                {% endif %}
+            </div>
+            {% for notif in notifications %}
+            <div class="notif-card {% if not notif.is_read %}unread{% endif %}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div style="flex:1;">
+                        {% if not notif.is_read %}<span style="background:#f59e0b;color:white;border-radius:10px;padding:1px 7px;font-size:11px;font-weight:bold;">NEW</span>{% endif %}
+                        <p style="font-weight:bold;font-size:14px;margin:4px 0 2px;">{{ notif.subject }}</p>
+                        <p style="font-size:13px;color:#555;">{{ notif.message }}</p>
+                        <p style="font-size:11px;color:#aaa;margin-top:4px;">From: {{ notif.from_name }} · {{ notif.created_at|date:"d M Y H:i" }}</p>
+                    </div>
+                    <div style="flex-shrink:0;margin-left:10px;">
+                        {% if not notif.is_read %}
+                        <form method="POST" action="/notifications/read/{{ notif.id }}/">
+                            {% csrf_token %}
+                            <button type="submit" style="padding:4px 10px;background:#e8ecff;color:#4f6ef7;border:none;border-radius:6px;cursor:pointer;font-size:12px;">Read</button>
+                        </form>
+                        {% endif %}
+                        <form method="POST" action="/notifications/delete/{{ notif.id }}/" style="margin-top:4px;">
+                            {% csrf_token %}
+                            <button type="submit" style="padding:4px 10px;background:#fee2e2;color:#b91c1c;border:none;border-radius:6px;cursor:pointer;font-size:12px;">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:40px;color:#aaa;">
+                <p style="font-size:36px;">🔔</p>
+                <p>No notifications yet.</p>
+            </div>
+            {% endfor %}
         </div>
 
         <!-- TAB 4: OFFERS -->
         <div class="tab-panel" id="tab-offers">
-            <h2 style="margin-bottom:10px;">My Internship Offers</h2>
-            <p style="font-size:13px;color:#666;margin-bottom:14px;">Formal offers approved by the placement officer appear here. You can accept or decline each.</p>
-            <div id="myOffersList"><p style="color:#aaa;">No offers yet.</p></div>
+            <h3 style="margin:16px 0 12px;">Internship Offers ({{ offers.count }})</h3>
+            {% for offer in offers %}
+            <div class="offer-card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <p style="font-weight:bold;font-size:15px;margin:0 0 3px;">{{ offer.internship.title }}</p>
+                        <p style="font-size:13px;color:#555;">🏢 {{ offer.internship.company }}</p>
+                        <p style="font-size:13px;color:#555;">📅 {{ offer.start_date }} → {{ offer.end_date }}</p>
+                        {% if offer.stipend %}<p style="font-size:13px;color:#555;">💰 {{ offer.stipend }}</p>{% endif %}
+                        {% if offer.terms %}<p style="font-size:13px;color:#555;margin-top:4px;">📋 {{ offer.terms }}</p>{% endif %}
+                        <p style="font-size:11px;color:#aaa;margin-top:4px;">Issued: {{ offer.created_at|date:"d M Y" }}</p>
+                    </div>
+                    <span class="badge" style="background:{% if offer.status == 'Accepted' %}#dcfce7;color:#15803d{% elif offer.status == 'Declined' %}#fee2e2;color:#b91c1c{% elif offer.status == 'Rejected by Officer' %}#fee2e2;color:#b91c1c{% elif offer.status == 'Awaiting Student Acceptance' %}#e0e7ff;color:#4338ca{% else %}#fef9c3;color:#a16207{% endif %};">{{ offer.status }}</span>
+                </div>
+                {% if offer.status == 'Awaiting Student Acceptance' %}
+                <div style="margin-top:12px;display:flex;gap:8px;">
+                    <form method="POST" action="/student/respond/offer/{{ offer.id }}/">
+                        {% csrf_token %}
+                        <input type="hidden" name="response" value="Accepted">
+                        <button type="submit" class="action-btn btn-accept" style="font-size:14px;padding:8px 18px;">🎉 Accept Offer</button>
+                    </form>
+                    <form method="POST" action="/student/respond/offer/{{ offer.id }}/">
+                        {% csrf_token %}
+                        <input type="hidden" name="response" value="Declined">
+                        <button type="submit" class="action-btn btn-decline" style="font-size:14px;padding:8px 18px;">✗ Decline Offer</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:40px;color:#aaa;">
+                <p style="font-size:36px;">📜</p>
+                <p>No offers yet. Keep applying!</p>
+            </div>
+            {% endfor %}
         </div>
 
         <!-- TAB 5: EVALUATIONS -->
         <div class="tab-panel" id="tab-evals">
-            <h2 style="margin-bottom:10px;">My Evaluations</h2>
-            <p style="font-size:13px;color:#666;margin-bottom:14px;">Evaluations from your employer and academic supervisor appear here.</p>
-            <div id="myEvalsList"><p style="color:#aaa;">No evaluations yet.</p></div>
+            <h3 style="margin:16px 0 12px;">My Evaluations ({{ evaluations.count }})</h3>
+            {% for eval in evaluations %}
+            <div class="eval-card">
+                <p style="font-weight:bold;font-size:15px;margin:0 0 3px;">{{ eval.internship.title }}</p>
+                <p style="font-size:13px;color:#555;">By: {{ eval.evaluator.get_full_name }} ({{ eval.from_role }})</p>
+                <div style="display:flex;gap:16px;margin:8px 0;flex-wrap:wrap;">
+                    <span style="font-size:13px;">Conduct: <strong>{{ eval.rating_conduct }}/5</strong></span>
+                    <span style="font-size:13px;">Technical: <strong>{{ eval.rating_technical }}/5</strong></span>
+                    <span style="font-size:13px;">Communication: <strong>{{ eval.rating_communication }}/5</strong></span>
+                    <span style="font-size:13px;">Overall: <strong class="stars">{% for i in "12345" %}{% if forloop.counter <= eval.rating_overall %}★{% else %}☆{% endif %}{% endfor %}</strong></span>
+                </div>
+                {% if eval.comments %}<p style="font-size:13px;color:#555;"><strong>Comments:</strong> {{ eval.comments }}</p>{% endif %}
+                {% if eval.recommendation %}<p style="font-size:13px;color:#4f6ef7;margin-top:4px;">💡 {{ eval.recommendation }}</p>{% endif %}
+                <p style="font-size:11px;color:#aaa;margin-top:4px;">{{ eval.submitted_at|date:"d M Y" }}</p>
+            </div>
+            {% empty %}
+            <div style="text-align:center;padding:40px;color:#aaa;">
+                <p style="font-size:36px;">⭐</p>
+                <p>No evaluations yet.</p>
+            </div>
+            {% endfor %}
         </div>
-    </div>
-</section>
 
-<!-- Edit Skills Popup -->
-<div class="popup-bg" id="skillPopup">
-    <div class="popup-box">
-        <h3 style="margin-bottom:14px;">✏️ Update Your Skills</h3>
-        <div id="popupTagsBox" style="border:1.5px solid #ddd;border-radius:8px;padding:8px;min-height:40px;margin-bottom:10px;"></div>
-        <div style="display:flex;gap:8px;margin-bottom:10px;">
-            <input type="text" id="popupSkillInput" placeholder="Type a skill..."
-                style="flex:1;padding:8px;border:1.5px solid #ddd;border-radius:6px;font-size:13px;">
-            <button onclick="addPopupSkill()" style="padding:8px 14px;background:#4f6ef7;color:white;border:none;border-radius:6px;cursor:pointer;">+ Add</button>
-        </div>
-        <div id="popupSuggestions" style="margin-bottom:16px;"></div>
-        <div style="display:flex;gap:10px;justify-content:flex-end;">
-            <button onclick="closeSkillPopup()" style="padding:8px 18px;background:#eee;border:none;border-radius:8px;cursor:pointer;">Cancel</button>
-            <button onclick="saveSkills()" style="padding:8px 18px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;">Save</button>
-        </div>
     </div>
 </div>
 
+<form id="logout-form" method="POST" action="/logout/">{% csrf_token %}</form>
 <footer><p>© 2026 IIPMS | Student Dashboard</p></footer>
 
-<script src="{% static 'js/auth.js' %}"></script>
-<script src="{% static 'js/data.js' %}"></script>
 <script>
-    
-    if (!user || user.role !== "student") ;
+function showTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+}
 
-    // Fill profile
-    document.getElementById("profileName").textContent  = user.firstName + " " + user.lastName;
-    document.getElementById("profileEmail").textContent = user.email;
-    if (user.course) document.getElementById("profileCourse").textContent = user.course;
-
-    // Profile photo
-    if (user.photo && user.photo !== "") {
-        document.getElementById("profileAvatar").innerHTML = '<img src="' + user.photo + '">';
-    }
-
-    // ── Skills display ──
-    function showProfileSkills() {
-        var box = document.getElementById("skillBadges");
-        if (!user.skills || user.skills === "") {
-            box.innerHTML = '<span style="font-size:12px;color:#aaa;">No skills added yet</span>';
-            return;
-        }
-        var arr = user.skills.split(",");
-        box.innerHTML = "";
-        for (var i = 0; i < arr.length; i++) {
-            var s = arr[i].trim();
-            if (s) box.innerHTML += '<span class="skill-badge">' + s + '</span>';
-        }
-    }
-    showProfileSkills();
-
-    // ── Stats ──
-    function loadStats() {
-        var apps   = getStudentApplications(user.id);
-        var notifs = getNotificationsForUser(user.id);
-        var logs   = getStudentLogs(user.id);
-        var unread = 0;
-        for (var i = 0; i < notifs.length; i++) { if (!notifs[i].isRead) unread++; }
-        document.getElementById("statApps").textContent   = apps.length;
-        document.getElementById("statNotifs").textContent = unread;
-        document.getElementById("statLogs").textContent   = logs.length;
-    }
-    loadStats();
-
-    // ── Browse Internships tab ──
-    function showInternships() {
-        var q      = document.getElementById("searchInput").value.toLowerCase();
-        var jobs   = getAllInternships();
-        var myApps = getStudentApplications(user.id);
-        var appliedIds = {};
-        for (var a = 0; a < myApps.length; a++) appliedIds[myApps[a].internshipId] = true;
-
-        var box = document.getElementById("internshipList");
-        box.innerHTML = "";
-        var count = 0;
-
-        for (var i = 0; i < jobs.length; i++) {
-            var job = jobs[i];
-            var haystack = (job.title + " " + job.company + " " + job.skills + " " + (job.location||"")).toLowerCase();
-            if (q && haystack.indexOf(q) === -1) continue;
-            count++;
-
-            var score    = (user.skills && user.skills !== "") ? getMatchScore(user.skills, job.skills) : 0;
-            var barCls   = score >= 70 ? "bar-green" : (score >= 40 ? "bar-orange" : "bar-red");
-            var skillArr = job.skills.split(",");
-            var pills    = "";
-            for (var k = 0; k < skillArr.length; k++) {
-                pills += '<span class="skill-pill">' + skillArr[k].trim() + '</span>';
-            }
-            var btn = appliedIds[job.id]
-                ? '<span style="padding:7px 14px;background:#dcfce7;color:#15803d;border-radius:8px;font-size:13px;font-weight:bold;white-space:nowrap;">✓ Applied</span>'
-                : '<button onclick="applyNow(' + job.id + ',\'' + esc(job.title) + '\',\'' + esc(job.company) + '\')" style="padding:7px 16px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;">Apply</button>';
-
-            box.innerHTML +=
-                '<div style="background:white;border-radius:12px;padding:18px 20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">' +
-                    '<div style="flex:1;">' +
-                        '<h3 style="margin:0 0 5px;font-size:16px;">' + job.title + '</h3>' +
-                        '<p style="font-size:13px;color:#555;margin:3px 0;">🏢 ' + job.company + ' &nbsp;|&nbsp; 📍 ' + job.location + (job.duration ? ' &nbsp;|&nbsp; ⏱ ' + job.duration : '') + (job.stipend ? ' &nbsp;|&nbsp; 💰 ' + job.stipend : '') + '</p>' +
-                        '<div style="margin:6px 0;">' + pills + '</div>' +
-                        (job.description ? '<p style="font-size:13px;color:#666;margin:4px 0;">' + job.description + '</p>' : '') +
-                        '<p style="font-size:12px;color:#666;margin:4px 0;">Skill match: <strong>' + score + '%</strong></p>' +
-                        '<div class="bar-bg"><div class="bar-fill ' + barCls + '" style="width:' + score + '%;"></div></div>' +
-                    '</div>' +
-                    '<div style="flex-shrink:0;">' + btn + '</div>' +
-                '</div>';
-        }
-        if (!count) box.innerHTML = '<p style="text-align:center;color:#aaa;padding:30px;">No internships match your search.</p>';
-    }
-    showInternships();
-
-    function esc(s) { return (s || "").replace(/'/g, "\\'"); }
-
-    function applyNow(jobId, jobTitle, companyName) {
-        var result = saveApplication(user.id, user.firstName + " " + user.lastName, user.email, user.skills || "", jobId, jobTitle, companyName);
-        if (result === "success") {
-            sendNotification(user.id, "IIPMS System", "Application Submitted", "Your application for " + jobTitle + " at " + companyName + " has been submitted successfully.");
-            alert("Applied for: " + jobTitle + "!");
-            showInternships();
-            loadStats();
-        } else {
-            alert(result);
-        }
-    }
-
-    // ── My Applications tab ──
-    function showMyApplications() {
-        var apps = getStudentApplications(user.id);
-        var box  = document.getElementById("myApplications");
-        if (!apps.length) { box.innerHTML = '<p style="color:#aaa;">No applications yet. Browse internships to apply!</p>'; return; }
-        box.innerHTML = "";
-        for (var i = apps.length - 1; i >= 0; i--) {
-            var app = apps[i];
-            var badgeCls = "badge-other";
-            if (app.status === "Pending")            badgeCls = "badge-pending";
-            if (app.status === "Interview Scheduled")badgeCls = "badge-interview";
-            if (app.status === "Hired")              badgeCls = "badge-hired";
-            if (app.status === "Rejected")           badgeCls = "badge-rejected";
-            if (app.status === "Shortlisted")        badgeCls = "badge-interview";
-
-            var interviewHtml = "";
-            if (app.interviewDate && app.interviewDate !== "") {
-                interviewHtml = '<div class="info-box box-blue">📅 Interview: <strong>' + app.interviewDate + '</strong>' + (app.interviewNote ? ' — ' + app.interviewNote : '') + '</div>';
-            }
-
-            var responseHtml = "";
-            if (app.studentResponse && app.studentResponse !== "") {
-                responseHtml = '<div class="info-box box-green">Your response: <strong>' + app.studentResponse + '</strong></div>';
-            }
-
-            var officerHtml = "";
-            if (app.officerNextStep && app.officerNextStep !== "") {
-                officerHtml = '<div class="info-box box-yellow">📋 Officer next step: <strong>' + app.officerNextStep + '</strong>' + (app.officerNote ? ' — ' + app.officerNote : '') + '</div>';
-            }
-
-            var actionButtons = "";
-            if (app.status === "Interview Scheduled" && (!app.studentResponse || app.studentResponse === "")) {
-                actionButtons = '<button class="btn-accept" onclick="respondToApp(' + app.id + ',\'Accepted Interview\')">✅ Accept Interview</button>' +
-                                '<button class="btn-decline" onclick="respondToApp(' + app.id + ',\'Declined Interview\')">✗ Decline</button>';
-            }
-            if (app.status === "Hired" && (!app.studentResponse || app.studentResponse === "")) {
-                actionButtons = '<button class="btn-accept" onclick="respondToApp(' + app.id + ',\'Accepted Offer\')">🎉 Accept Offer</button>' +
-                                '<button class="btn-decline" onclick="respondToApp(' + app.id + ',\'Declined Offer\')">✗ Decline</button>';
-            }
-            if (app.status === "Hired" && app.studentResponse === "Accepted Offer") {
-                actionButtons = '<strong style="color:#15803d;font-size:13px;">🎉 You accepted this offer!</strong>';
-            }
-
-            box.innerHTML +=
-                '<div class="card" style="margin-bottom:12px;">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
-                        '<div><p style="font-weight:bold;font-size:15px;margin:0 0 3px;">' + app.internshipTitle + '</p>' +
-                        '<p style="font-size:13px;color:#555;margin:2px 0;">🏢 ' + (app.companyName || "") + '</p>' +
-                        '<p style="font-size:12px;color:#aaa;margin:2px 0;">Applied: ' + app.date + '</p></div>' +
-                        '<span class="badge ' + badgeCls + '">' + app.status + '</span>' +
-                    '</div>' +
-                    interviewHtml + responseHtml + officerHtml +
-                    (actionButtons ? '<div style="margin-top:10px;">' + actionButtons + '</div>' : '') +
-                '</div>';
-        }
-    }
-    showMyApplications();
-
-    function respondToApp(appId, response) {
-        studentRespondToApp(appId, response);
-        alert("Response recorded: " + response);
-        showMyApplications();
-    }
-
-    // ── Notifications ──
-    function showNotifications() {
-        var notifs = getNotificationsForUser(user.id);
-        var box    = document.getElementById("notificationsList");
-        if (!notifs.length) { box.innerHTML = '<p style="color:#888;">No notifications yet.</p>'; return; }
-        box.innerHTML = "";
-        for (var i = notifs.length - 1; i >= 0; i--) {
-            var n = notifs[i];
-            var cls  = n.isRead ? "notif-card" : "notif-card unread";
-            var badge = !n.isRead ? '<span style="background:#f59e0b;color:white;padding:2px 8px;border-radius:10px;font-size:11px;">New</span>' : '';
-            var readBtn = !n.isRead ? '<button class="btn-read" onclick="markOneRead(' + n.id + ')">✓ Mark as Read</button>' : '';
-            box.innerHTML +=
-                '<div class="' + cls + '" id="notif-' + n.id + '">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">' +
-                        '<strong style="font-size:14px;">' + n.subject + '</strong>' + badge +
-                    '</div>' +
-                    '<p style="font-size:13px;color:#555;margin:6px 0;white-space:pre-line;">' + n.message + '</p>' +
-                    '<p style="font-size:11px;color:#aaa;margin-bottom:8px;">From: ' + n.fromName + ' | ' + n.date + '</p>' +
-                    '<div style="display:flex;gap:8px;">' + readBtn +
-                        '<button class="btn-delete" onclick="deleteOneNotif(' + n.id + ')">🗑 Delete</button>' +
-                    '</div>' +
-                '</div>';
-        }
-    }
-
-    function markOneRead(id) { markNotificationRead(id); showNotifications(); loadStats(); }
-    function markAllRead() {
-        var notifs = getNotificationsForUser(user.id);
-        for (var i = 0; i < notifs.length; i++) { if (!notifs[i].isRead) markNotificationRead(notifs[i].id); }
-        showNotifications(); loadStats();
-    }
-    function deleteOneNotif(id) { deleteNotification(id); showNotifications(); loadStats(); }
-
-    // ── Offers ──
-    function showMyOffers() {
-        var offers = getStudentOffers(user.id);
-        var box    = document.getElementById("myOffersList");
-        if (!offers.length) { box.innerHTML = '<p style="color:#aaa;">No offers yet. Once an employer issues an offer and the placement officer approves it, it will appear here.</p>'; return; }
-        box.innerHTML = "";
-        for (var i = offers.length - 1; i >= 0; i--) {
-            var o = offers[i];
-            var actions = "";
-            if (o.officerApproved === true && o.status === "Awaiting Student Acceptance") {
-                actions = '<button class="btn-accept" onclick="respondToOffer(' + o.id + ',\'Accepted\')">✅ Accept Offer</button>' +
-                          '<button class="btn-decline" onclick="respondToOffer(' + o.id + ',\'Declined\')">✗ Decline</button>';
-            }
-            var st = "background:#fef9c3;color:#a16207;";
-            if (o.status === "Accepted") st = "background:#dcfce7;color:#15803d;";
-            if (o.status === "Declined" || o.status === "Rejected by Officer") st = "background:#fee2e2;color:#b91c1c;";
-            box.innerHTML +=
-                '<div class="card" style="margin-bottom:12px;">' +
-                    '<h3 style="margin:0 0 4px;">' + o.internshipTitle + '</h3>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">From: ' + o.employerName + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">📅 ' + o.startDate + ' to ' + o.endDate + (o.stipend ? ' | 💰 ' + o.stipend : '') + '</p>' +
-                    (o.terms ? '<p style="font-size:13px;color:#666;margin:4px 0;">Terms: ' + o.terms + '</p>' : '') +
-                    '<p style="font-size:12px;color:#aaa;margin:4px 0 8px;">Issued: ' + o.date + '</p>' +
-                    '<span style="padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;' + st + '">' + o.status + '</span>' +
-                    (actions ? '<div style="margin-top:10px;">' + actions + '</div>' : '') +
-                '</div>';
-        }
-    }
-    function respondToOffer(offerId, response) {
-        updateOfferStatus(offerId, response, undefined);
-        alert("Response recorded: " + response);
-        showMyOffers();
-    }
-
-    // ── Evaluations ──
-    function showMyEvaluations() {
-        var evals = getStudentEvaluations(user.id);
-        var box   = document.getElementById("myEvalsList");
-        if (!evals.length) { box.innerHTML = '<p style="color:#aaa;">No evaluations yet.</p>'; return; }
-        box.innerHTML = "";
-        for (var i = evals.length - 1; i >= 0; i--) {
-            var ev = evals[i];
-            box.innerHTML +=
-                '<div class="card" style="margin-bottom:12px;border-left:4px solid #22c55e;">' +
-                    '<h3 style="margin:0 0 4px;">' + ev.internshipTitle + '</h3>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">Evaluated by: <strong>' + ev.fromName + '</strong> (' + ev.fromRole + ')</p>' +
-                    '<p style="font-size:13px;color:#555;margin:4px 0;">⭐ Conduct: ' + ev.ratings.conduct + '/5 | 💻 Technical: ' + ev.ratings.technical + '/5 | 💬 Comm: ' + ev.ratings.communication + '/5 | 📊 Overall: ' + ev.ratings.overall + '/5</p>' +
-                    '<p style="font-size:13px;color:#555;margin:6px 0;"><strong>Comments:</strong> ' + ev.comments + '</p>' +
-                    '<p style="font-size:13px;">Recommendation: <strong>' + ev.recommendation + '</strong></p>' +
-                    '<p style="font-size:11px;color:#aaa;margin-top:6px;">' + ev.date + '</p>' +
-                '</div>';
-        }
-    }
-
-    // ── Tab switching ──
-    function showTab(tabName, btn) {
-        var panels = document.getElementsByClassName("tab-panel");
-        for (var i = 0; i < panels.length; i++) panels[i].classList.remove("active");
-        var btns = document.getElementsByClassName("tab-btn");
-        for (var j = 0; j < btns.length; j++) btns[j].classList.remove("active");
-        document.getElementById("tab-" + tabName).classList.add("active");
-        btn.classList.add("active");
-        if (tabName === "internships")   showInternships();
-        if (tabName === "applications")  showMyApplications();
-        if (tabName === "notifications") showNotifications();
-        if (tabName === "offers")        showMyOffers();
-        if (tabName === "evals")         showMyEvaluations();
-    }
-
-    // ── Edit Skills Popup ──
-    var popupSkills = [];
-    var allSuggestions = ["HTML","CSS","JavaScript","Python","Java","SQL","React","Node.js","Django","Figma","Excel","Git","PHP","TypeScript","AWS","C++","MongoDB","R","Tableau","Power BI"];
-
-    function openSkillPopup() {
-        popupSkills = user.skills ? user.skills.split(",").map(function(s){return s.trim();}).filter(Boolean) : [];
-        renderPopupTags();
-        document.getElementById("skillPopup").classList.add("show");
-    }
-    function closeSkillPopup() { document.getElementById("skillPopup").classList.remove("show"); }
-
-    function renderPopupTags() {
-        var box = document.getElementById("popupTagsBox");
-        box.innerHTML = "";
-        for (var i = 0; i < popupSkills.length; i++) {
-            var s = popupSkills[i];
-            box.innerHTML += '<span class="skill-tag">' + s + ' <span onclick="removePopupSkill(\'' + s.replace(/'/g,"\\'") + '\')" style="cursor:pointer;font-weight:bold;">×</span></span>';
-        }
-        var sug = document.getElementById("popupSuggestions");
-        sug.innerHTML = "";
-        for (var j = 0; j < allSuggestions.length; j++) {
-            var name = allSuggestions[j];
-            var found = false;
-            for (var k = 0; k < popupSkills.length; k++) { if (popupSkills[k].toLowerCase() === name.toLowerCase()) { found = true; break; } }
-            if (!found) sug.innerHTML += '<span class="skill-suggestion" onclick="addPopupSkillByName(\'' + name + '\')">' + name + '</span>';
-        }
-    }
-
-    function addPopupSkill() {
-        var val = document.getElementById("popupSkillInput").value.trim();
-        document.getElementById("popupSkillInput").value = "";
-        if (!val) return;
-        for (var i = 0; i < popupSkills.length; i++) { if (popupSkills[i].toLowerCase() === val.toLowerCase()) return; }
-        popupSkills.push(val);
-        renderPopupTags();
-    }
-    function addPopupSkillByName(name) {
-        for (var i = 0; i < popupSkills.length; i++) { if (popupSkills[i].toLowerCase() === name.toLowerCase()) return; }
-        popupSkills.push(name);
-        renderPopupTags();
-    }
-    function removePopupSkill(name) {
-        popupSkills = popupSkills.filter(function(s){ return s !== name; });
-        renderPopupTags();
-    }
-    function saveSkills() {
-        var newSkills = popupSkills.join(", ");
-        updateUserSkills(newSkills);
-        user.skills = newSkills;
-        closeSkillPopup();
-        showProfileSkills();
-        showInternships();
-    }
-    document.getElementById("popupSkillInput").addEventListener("keydown", function(e) {
-        if (e.key === "Enter") { e.preventDefault(); addPopupSkill(); }
+function filterJobs() {
+    var q = document.getElementById('jobSearch').value.toLowerCase();
+    document.querySelectorAll('.job-card').forEach(function(card) {
+        var data = card.getAttribute('data-search') || '';
+        card.style.display = data.indexOf(q) !== -1 ? '' : 'none';
     });
+}
 </script>
-<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
 </body>
 </html>

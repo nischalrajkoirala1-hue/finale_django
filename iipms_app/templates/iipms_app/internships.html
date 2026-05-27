@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,226 +7,150 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Internships - IIPMS</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-
     <style>
-        .page-wrap { max-width: 900px; margin: 0 auto; padding: 24px 30px; }
-
-        /* Search bar */
-        .search-bar input {
-            width: 100%;
-            padding: 11px 16px;
-            border: 1.5px solid #dddddd;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 16px;
-            box-sizing: border-box;
-        }
-
-        /* Job card row layout */
-        .job-row {
-            background-color: white;
-            border-radius: 12px;
-            padding: 18px 20px;
-            margin-bottom: 14px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-        }
-
-        .job-row h3 { margin: 0 0 5px; font-size: 16px; }
-        .job-row p  { font-size: 13px; color: #555; margin: 3px 0; }
-
-        /* Skill pill */
-        .skill-pill {
-            display: inline-block;
-            background-color: #e8ecff;
-            color: #4f6ef7;
-            padding: 2px 9px;
-            border-radius: 12px;
-            font-size: 11px;
-            margin: 2px;
-        }
-
-        /* Skill match bar */
-        .bar-bg   { background-color: #eeeeee; border-radius: 8px; height: 8px; margin: 5px 0; }
-        .bar-fill { height: 8px; border-radius: 8px; }
-        .bar-green  { background-color: #22c55e; }
-        .bar-orange { background-color: #f59e0b; }
-        .bar-red    { background-color: #ef4444; }
+        .page-wrap{max-width:900px;margin:0 auto;padding:24px 30px;}
+        .job-row{background:white;border-radius:12px;padding:18px 20px;margin-bottom:14px;box-shadow:0 2px 8px rgba(0,0,0,0.07);display:flex;justify-content:space-between;align-items:flex-start;gap:16px;}
+        .job-row h3{margin:0 0 5px;font-size:16px;}
+        .job-row p{font-size:13px;color:#555;margin:3px 0;}
+        .skill-pill{display:inline-block;background:#e8ecff;color:#4f6ef7;padding:2px 9px;border-radius:12px;font-size:11px;margin:2px;}
+        .bar-bg{background:#eee;border-radius:8px;height:8px;margin:5px 0;}
+        .search-box{width:100%;padding:11px 16px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;box-sizing:border-box;margin-bottom:16px;outline:none;}
+        .search-box:focus{border-color:#4f6ef7;}
+        .apply-btn{padding:7px 16px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;}
+        .applied-badge{padding:7px 14px;background:#dcfce7;color:#15803d;border-radius:8px;font-size:13px;font-weight:bold;white-space:nowrap;}
+        .filter-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+        .filter-select{padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:13px;outline:none;background:white;}
     </style>
 </head>
 <body>
-    <!-- Django flash messages (success/error banners) -->
-    {% if messages %}
-    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
-        {% for message in messages %}
-        <div style="background:{% if message.tags == 'success' %}#dcfce7{% elif message.tags == 'danger' %}#fee2e2{% else %}#fef9c3{% endif %};
-                    border-radius:8px;padding:12px 16px;margin-bottom:8px;
-                    color:{% if message.tags == 'success' %}#15803d{% elif message.tags == 'danger' %}#b91c1c{% else %}#a16207{% endif %};
-                    font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            {{ message }}
+<header class="navbar">
+    <div class="logo">IIPMS</div>
+    <nav><ul>
+        <li><a href="/student/">Dashboard</a></li>
+        <li><a href="/student/internships/">Internships</a></li>
+        <li><a href="/student/matches/">Matches</a></li>
+        <li><a href="/student/log/">Logs</a></li>
+        <li><a href="/logout/" class="btn">Logout</a></li>
+    </ul></nav>
+</header>
+
+{% if messages %}
+<div style="position:fixed;top:70px;right:20px;z-index:9999;width:300px;">
+    {% for message in messages %}
+    <div style="background:#dcfce7;border-radius:8px;padding:12px;margin-bottom:8px;color:#15803d;font-size:14px;font-weight:bold;">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<section class="page-title">
+    <h1>Browse Internships</h1>
+    <p>Search and apply for available opportunities ({{ jobs|length }} available)</p>
+</section>
+
+<div class="page-wrap">
+    <input type="text" class="search-box" id="searchBox" placeholder="🔍 Search by title, company or skill..." onkeyup="filterJobs()">
+
+    <div class="filter-row">
+        <select class="filter-select" id="filterWorkType" onchange="filterJobs()">
+            <option value="">All work types</option>
+            <option value="remote">Remote</option>
+            <option value="on-site">On-site</option>
+            <option value="hybrid">Hybrid</option>
+        </select>
+        <select class="filter-select" id="filterIndustry" onchange="filterJobs()">
+            <option value="">All industries</option>
+            <option value="technology">Technology</option>
+            <option value="finance">Finance</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="engineering">Engineering</option>
+            <option value="marketing">Marketing</option>
+        </select>
+        <select class="filter-select" id="filterScore" onchange="filterJobs()">
+            <option value="">All match scores</option>
+            <option value="high">Strong match (70%+)</option>
+            <option value="medium">Partial match (40-69%)</option>
+            <option value="any">Show all</option>
+        </select>
+    </div>
+
+    <div id="jobList">
+        {% for item in jobs %}
+        <div class="job-row"
+            data-search="{{ item.job.title|lower }} {{ item.job.company|lower }} {{ item.job.skills|lower }} {{ item.job.location|lower }}"
+            data-worktype="{{ item.job.work_type|lower }}"
+            data-industry="{{ item.job.industry|lower }}"
+            data-score="{{ item.score }}">
+            <div style="flex:1;">
+                <h3>{{ item.job.title }}</h3>
+                <p>🏢 {{ item.job.company }} &nbsp;|&nbsp; 📍 {{ item.job.location }}
+                    {% if item.job.duration %}&nbsp;|&nbsp; ⏱ {{ item.job.duration }}{% endif %}
+                    {% if item.job.stipend %}&nbsp;|&nbsp; 💰 {{ item.job.stipend }}{% endif %}
+                    {% if item.job.work_type %}&nbsp;|&nbsp; 💼 {{ item.job.work_type }}{% endif %}
+                </p>
+                <div style="margin:6px 0;">
+                    {% for skill in item.job.skills|split_comma %}
+                    <span class="skill-pill">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+                {% if item.job.description %}<p style="color:#666;">{{ item.job.description }}</p>{% endif %}
+                <p style="font-size:12px;color:#666;margin:4px 0;">Skill match: <strong>{{ item.score }}%</strong></p>
+                <div class="bar-bg">
+                    <div style="height:8px;border-radius:8px;width:{{ item.score }}%;background:{% if item.score >= 70 %}#22c55e{% elif item.score >= 40 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
+                </div>
+            </div>
+            <div style="flex-shrink:0;padding-top:4px;">
+                {% if item.already_applied %}
+                <span class="applied-badge">✓ Applied</span>
+                {% else %}
+                <form method="POST" action="/student/apply/{{ item.job.id }}/">
+                    {% csrf_token %}
+                    <button type="submit" class="apply-btn">Apply</button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div style="text-align:center;padding:40px;color:#aaa;">
+            <p style="font-size:36px;">🔍</p>
+            <p style="font-size:15px;">No internships available right now.</p>
         </div>
         {% endfor %}
     </div>
-    {% endif %}
+    <p id="noResults" style="display:none;text-align:center;color:#aaa;padding:30px;">No internships match your search.</p>
+</div>
 
+<form id="logout-form" method="POST" action="/logout/">{% csrf_token %}</form>
+<footer><p>© 2026 IIPMS | Internships</p></footer>
 
-    <header class="navbar">
-        <div class="logo">IIPMS</div>
-        <nav>
-            <ul>
-                <li><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
-                <li><a href="{% url 'internship_list' %}">Internships</a></li>
-                <li><a href="{% url 'matches' %}">Matches</a></li>
-                <li><a href="{% url 'weekly_log' %}">Logs</a></li>
-                <li><a href="/logout/" class="btn">Logout</a></li>
-            </ul>
-        </nav>
-    </header>
+<script>
+function filterJobs() {
+    var q         = document.getElementById('searchBox').value.toLowerCase();
+    var workType  = document.getElementById('filterWorkType').value.toLowerCase();
+    var industry  = document.getElementById('filterIndustry').value.toLowerCase();
+    var scoreFilter = document.getElementById('filterScore').value;
+    var cards     = document.querySelectorAll('.job-row');
+    var visible   = 0;
 
-    <section class="page-title">
-        <h1>Browse Internships</h1>
-        <p>Search and apply for available opportunities</p>
-    </section>
+    cards.forEach(function(card) {
+        var searchData  = card.getAttribute('data-search') || '';
+        var cardWork    = card.getAttribute('data-worktype') || '';
+        var cardInd     = card.getAttribute('data-industry') || '';
+        var cardScore   = parseInt(card.getAttribute('data-score') || '0');
 
-    <div class="page-wrap">
+        var matchSearch   = !q || searchData.indexOf(q) !== -1;
+        var matchWork     = !workType || cardWork.indexOf(workType) !== -1;
+        var matchIndustry = !industry || cardInd.indexOf(industry) !== -1;
+        var matchScore    = true;
+        if (scoreFilter === 'high')   matchScore = cardScore >= 70;
+        if (scoreFilter === 'medium') matchScore = cardScore >= 40 && cardScore < 70;
 
-        <!-- Search bar — filters results as the student types -->
-        <div class="search-bar">
-            <input type="text" id="searchInput"
-                placeholder="Search by title, company or skill..."
-                onkeyup="showJobs()">
-        </div>
+        var show = matchSearch && matchWork && matchIndustry && matchScore;
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
 
-        <!-- Job cards appear here -->
-        <div id="jobList"></div>
-
-    </div>
-
-    <footer>
-        <p>© 2026 IIPMS | Internships</p>
-    </footer>
-
-    <script src="{% static 'js/auth.js' %}"></script>
-    <script src="{% static 'js/data.js' %}"></script>
-    <script>
-
-        // Get the logged in user
-        
-
-        // Show jobs when page first loads
-        showJobs();
-
-        function showJobs() {
-            var searchText = document.getElementById("searchInput").value.toLowerCase();
-            var allJobs    = getAllInternships();
-            var myApps     = getStudentApplications(user.id);
-            var container  = document.getElementById("jobList");
-
-            // Make a list of job IDs the student already applied for
-            var appliedIds = [];
-            for (var a = 0; a < myApps.length; a++) {
-                appliedIds.push(myApps[a].internshipId);
-            }
-
-            container.innerHTML = "";
-            var count = 0;
-
-            for (var i = 0; i < allJobs.length; i++) {
-                var job = allJobs[i];
-
-                // Check if this job matches the search
-                var searchable = (job.title + " " + job.company + " " + job.skills).toLowerCase();
-
-                // If there is a search and the job doesn't match, skip it
-                if (searchText !== "" && searchable.indexOf(searchText) === -1) {
-                    continue;
-                }
-
-                count++;
-
-                // Calculate how well the student's skills match
-                var score = 0;
-                if (user.skills !== "" && user.skills !== null && user.skills !== undefined) {
-                    score = getMatchScore(user.skills, job.skills);
-                }
-
-                // Pick the bar colour
-                var barColour = "bar-red";
-                if (score >= 70) {
-                    barColour = "bar-green";
-                } else if (score >= 40) {
-                    barColour = "bar-orange";
-                }
-
-                // Build skill pills
-                var skillArray = job.skills.split(",");
-                var pills = "";
-                for (var k = 0; k < skillArray.length; k++) {
-                    pills += '<span class="skill-pill">' + skillArray[k].trim() + '</span>';
-                }
-
-                // Check if already applied
-                var alreadyApplied = false;
-                for (var n = 0; n < appliedIds.length; n++) {
-                    if (appliedIds[n] === job.id) {
-                        alreadyApplied = true;
-                    }
-                }
-
-                // Show apply button or "Applied" badge
-                var actionBtn = "";
-                if (alreadyApplied) {
-                    actionBtn = '<span style="padding:7px 14px;background:#dcfce7;color:#15803d;border-radius:8px;font-size:13px;font-weight:bold;white-space:nowrap;">✓ Applied</span>';
-                } else {
-                    actionBtn = '<button onclick="applyNow(' + job.id + ', \'' + job.title + '\', \'' + job.company + '\')" style="padding:7px 16px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;white-space:nowrap;">Apply</button>';
-                }
-
-                container.innerHTML +=
-                    '<div class="job-row">' +
-                        '<div style="flex: 1;">' +
-                            '<h3>' + job.title + '</h3>' +
-                            '<p>🏢 ' + job.company + ' &nbsp;|&nbsp; 📍 ' + job.location + ' &nbsp;|&nbsp; ⏱ ' + (job.duration || "TBD") + '</p>' +
-                            '<div style="margin: 6px 0;">' + pills + '</div>' +
-                            (job.description ? '<p style="color: #666;">' + job.description + '</p>' : '') +
-                            '<p style="font-size: 12px; color: #666; margin: 4px 0;">Skill match: <strong>' + score + '%</strong></p>' +
-                            '<div class="bar-bg"><div class="bar-fill ' + barColour + '" style="width: ' + score + '%;"></div></div>' +
-                        '</div>' +
-                        '<div style="flex-shrink: 0;">' + actionBtn + '</div>' +
-                    '</div>';
-            }
-
-            // Show message if nothing found
-            if (count === 0) {
-                container.innerHTML = '<p style="text-align:center;color:#aaa;padding:30px;">No internships match your search.</p>';
-            }
-        }
-
-
-        // Apply for a job
-        function applyNow(jobId, jobTitle, companyName) {
-            var result = saveApplication(
-                user.id,
-                user.firstName + " " + user.lastName,
-                user.email,
-                user.skills || "",
-                jobId,
-                jobTitle,
-                companyName
-            );
-
-            if (result === "success") {
-                alert("Applied for: " + jobTitle + "!");
-                showJobs(); // Refresh so the button changes to "Applied"
-            } else {
-                alert(result);
-            }
-        }
-
-    </script>
-
-<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
+    document.getElementById('noResults').style.display = visible === 0 ? '' : 'none';
+}
+</script>
 </body>
 </html>

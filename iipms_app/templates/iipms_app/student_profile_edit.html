@@ -1,0 +1,205 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - IIPMS</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .edit-container{max-width:700px;margin:30px auto;background:white;padding:30px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.1);}
+        .success-box{background:#dcfce7;border:1.5px solid #22c55e;color:#15803d;padding:10px 14px;border-radius:8px;font-size:14px;margin-bottom:16px;}
+        select{width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;outline:none;background:#fff;}
+        .skills-grid{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px;}
+        .skill-tag{background:#e8ecff;color:#4f6ef7;padding:6px 12px;border-radius:20px;font-size:13px;cursor:pointer;border:1.5px solid transparent;user-select:none;transition:all 0.15s;}
+        .skill-tag.selected{background:#4f6ef7;color:white;border-color:#4f6ef7;}
+        .skill-tag:hover{border-color:#4f6ef7;}
+        .skills-category{font-size:12px;font-weight:bold;color:#888;margin:10px 0 4px;text-transform:uppercase;}
+        .save-btn{width:100%;padding:12px;background:#4f6ef7;color:white;border:none;border-radius:6px;font-size:16px;cursor:pointer;margin-top:15px;}
+        .save-btn:hover{background:#3b5bdb;}
+    </style>
+</head>
+<body>
+
+<header class="navbar">
+    <div class="logo">IIPMS</div>
+    <nav><ul>
+        <li><a href="/student/">Dashboard</a></li>
+        <li><a href="/student/internships/">Internships</a></li>
+        <li><a href="/student/matches/">Matches</a></li>
+        <li><a href="/logout/" class="btn">Logout</a></li>
+    </ul></nav>
+</header>
+
+<div style="max-width:700px;margin:30px auto;padding:0 20px;">
+
+    {% for message in messages %}
+    <div class="success-box">{{ message }}</div>
+    {% endfor %}
+
+    <div class="edit-container">
+        <h2 style="margin-bottom:20px;color:#1e293b;">Edit Your Profile</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="input-row">
+                <div class="input-group">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" value="{{ request.user.first_name }}">
+                </div>
+                <div class="input-group">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" value="{{ request.user.last_name }}">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Course / Degree</label>
+                <input type="text" name="course" value="{{ profile.course }}" placeholder="e.g. Bachelor of Computer Science">
+            </div>
+
+            <div class="input-row">
+                <div class="input-group">
+                    <label>WAM / GPA</label>
+                    <input type="number" name="wam" step="0.01" value="{{ profile.wam }}" placeholder="e.g. 75.5">
+                </div>
+                <div class="input-group">
+                    <label>Availability</label>
+                    <input type="text" name="availability" value="{{ profile.availability }}" placeholder="e.g. July 2026">
+                </div>
+            </div>
+
+            <!-- SKILLS PICKER -->
+            <div class="input-group">
+                <label>Your Skills — click to select</label>
+
+                <div class="skills-category">Programming Languages</div>
+                <div class="skills-grid">
+                    {% for skill in all_skills.programming %}
+                    <span class="skill-tag {% if skill in current_skills %}selected{% endif %}" onclick="toggleSkill(this)">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="skills-category">Web Development</div>
+                <div class="skills-grid">
+                    {% for skill in all_skills.web %}
+                    <span class="skill-tag {% if skill in current_skills %}selected{% endif %}" onclick="toggleSkill(this)">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="skills-category">Data & AI</div>
+                <div class="skills-grid">
+                    {% for skill in all_skills.data %}
+                    <span class="skill-tag {% if skill in current_skills %}selected{% endif %}" onclick="toggleSkill(this)">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="skills-category">Cloud & DevOps</div>
+                <div class="skills-grid">
+                    {% for skill in all_skills.cloud %}
+                    <span class="skill-tag {% if skill in current_skills %}selected{% endif %}" onclick="toggleSkill(this)">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="skills-category">Mobile & Other</div>
+                <div class="skills-grid">
+                    {% for skill in all_skills.other %}
+                    <span class="skill-tag {% if skill in current_skills %}selected{% endif %}" onclick="toggleSkill(this)">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+
+                <div class="skills-category">Or type your own</div>
+                <input type="text" id="customSkillInput" placeholder="Press Enter to add" style="width:100%;padding:10px 14px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;margin-bottom:8px;" onkeydown="addCustomSkill(event)">
+
+                <input type="hidden" name="skills" id="skillsInput" value="{{ profile.skills }}">
+                <p style="font-size:13px;color:#4f6ef7;margin-top:6px;" id="selectedCount"></p>
+            </div>
+
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Preferred Industry</label>
+                    <select name="industry_pref">
+                        <option value="">No preference</option>
+                        {% for val, label in industry_choices %}
+                        <option value="{{ val }}" {% if profile.industry_pref == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Work Type</label>
+                    <select name="work_type">
+                        <option value="">No preference</option>
+                        <option value="Remote" {% if profile.work_type == "Remote" %}selected{% endif %}>Remote</option>
+                        <option value="On-site" {% if profile.work_type == "On-site" %}selected{% endif %}>On-site</option>
+                        <option value="Hybrid" {% if profile.work_type == "Hybrid" %}selected{% endif %}>Hybrid</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label>Location Preference</label>
+                <input type="text" name="location_pref" value="{{ profile.location_pref }}" placeholder="e.g. Sydney">
+            </div>
+
+            <div class="input-group">
+                <label>Profile Photo</label>
+                {% if request.user.photo %}
+                    <p style="font-size:13px;color:#555;margin-bottom:6px;">Current photo: <img src="{{ request.user.photo.url }}" style="width:40px;height:40px;border-radius:50%;vertical-align:middle;"></p>
+                {% endif %}
+                <input type="file" name="photo" accept="image/*">
+            </div>
+
+            <div class="input-group">
+                <label>Upload / Replace CV</label>
+                <input type="file" name="cv_file" accept=".pdf,.doc,.docx">
+                {% if profile.cv_file %}
+                <p style="font-size:13px;color:#555;margin-top:4px;">Current: {{ profile.cv_file.name }}</p>
+                {% endif %}
+            </div>
+
+            <button type="submit" class="save-btn">💾 Save Profile</button>
+            <p style="text-align:center;margin-top:12px;"><a href="/student/" style="color:#4f6ef7;">← Back to Dashboard</a></p>
+        </form>
+    </div>
+</div>
+
+<footer><p>© 2026 IIPMS</p></footer>
+
+<script>
+var selectedSkills = "{{ profile.skills }}".split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+function toggleSkill(el) {
+    var skill = el.textContent.trim();
+    var idx = selectedSkills.indexOf(skill);
+    if (idx === -1) {
+        selectedSkills.push(skill);
+        el.classList.add('selected');
+    } else {
+        selectedSkills.splice(idx, 1);
+        el.classList.remove('selected');
+    }
+    updateSkillsInput();
+}
+
+function addCustomSkill(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        var val = document.getElementById('customSkillInput').value.trim();
+        if (val && selectedSkills.indexOf(val) === -1) {
+            selectedSkills.push(val);
+            updateSkillsInput();
+            document.getElementById('customSkillInput').value = '';
+        }
+    }
+}
+
+function updateSkillsInput() {
+    document.getElementById('skillsInput').value = selectedSkills.join(', ');
+    document.getElementById('selectedCount').textContent = selectedSkills.length + ' skill(s) selected: ' + selectedSkills.join(', ');
+}
+
+updateSkillsInput();
+</script>
+</body>
+</html>

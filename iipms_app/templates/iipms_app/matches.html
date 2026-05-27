@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,345 +7,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Matches - IIPMS</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-
     <style>
-        .page-wrap { max-width: 900px; margin: 0 auto; padding: 24px 30px; }
-
-        /* Profile summary box at the top */
-        .profile-summary {
-            background-color: white;
-            border-radius: 12px;
-            padding: 18px 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        }
-        .profile-summary h3 { margin: 0 0 10px; color: #4f6ef7; font-size: 15px; }
-
-        /* Small badge */
-        .info-badge {
-            display: inline-block;
-            background-color: #f0f2ff;
-            color: #4f6ef7;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 12px;
-            margin: 2px;
-            border: 1px solid #c7d2fe;
-        }
-
-        /* Warning box */
-        .warn-box {
-            background-color: #fefce8;
-            border: 1.5px solid #f59e0b;
-            color: #a16207;
-            padding: 12px 16px;
-            border-radius: 8px;
-            font-size: 14px;
-            margin-bottom: 16px;
-        }
-
-        /* Match card */
-        .match-card {
-            background-color: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
-        }
-
-        /* Score display */
-        .score-high   { color: #15803d; font-weight: bold; font-size: 26px; }
-        .score-medium { color: #a16207; font-weight: bold; font-size: 26px; }
-        .score-low    { color: #b91c1c; font-weight: bold; font-size: 26px; }
-
-        /* Match bar */
-        .bar-bg   { background-color: #eeeeee; border-radius: 8px; height: 10px; margin: 6px 0 10px; }
-        .bar-fill { height: 10px; border-radius: 8px; }
-        .bar-green  { background-color: #22c55e; }
-        .bar-orange { background-color: #f59e0b; }
-        .bar-red    { background-color: #ef4444; }
-
-        /* Why matched section */
-        .why-box {
-            background-color: #f8faff;
-            border: 1px solid #e0e7ff;
-            border-radius: 8px;
-            padding: 10px 14px;
-            margin: 8px 0 12px;
-        }
-        .why-box p {
-            font-size: 12px;
-            color: #555;
-            margin: 3px 0;
-        }
-        .why-box strong {
-            color: #4f6ef7;
-            font-size: 12px;
-        }
-
-        /* Skill badge */
-        .skill-badge {
-            display: inline-block;
-            background-color: #e8ecff;
-            color: #4f6ef7;
-            padding: 2px 9px;
-            border-radius: 12px;
-            font-size: 11px;
-            margin: 2px;
-        }
+        .page-wrap{max-width:900px;margin:0 auto;padding:24px 30px;}
+        .profile-summary{background:white;border-radius:12px;padding:18px 20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+        .info-badge{display:inline-block;background:#f0f2ff;color:#4f6ef7;padding:3px 10px;border-radius:12px;font-size:12px;margin:2px;border:1px solid #c7d2fe;}
+        .warn-box{background:#fefce8;border:1.5px solid #f59e0b;color:#a16207;padding:12px 16px;border-radius:8px;font-size:14px;margin-bottom:16px;}
+        .match-card{background:white;border-radius:12px;padding:20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,0.07);}
+        .score-high{color:#15803d;font-weight:bold;font-size:28px;}
+        .score-med{color:#a16207;font-weight:bold;font-size:28px;}
+        .score-low{color:#b91c1c;font-weight:bold;font-size:28px;}
+        .bar-bg{background:#eee;border-radius:8px;height:10px;margin:6px 0 10px;}
+        .skill-badge{display:inline-block;background:#e8ecff;color:#4f6ef7;padding:2px 9px;border-radius:12px;font-size:11px;margin:2px;}
+        .why-box{background:#f8faff;border:1px solid #e0e7ff;border-radius:8px;padding:10px 14px;margin:8px 0 12px;}
+        .apply-btn{padding:7px 16px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;}
+        .applied-badge{padding:7px 14px;background:#dcfce7;color:#15803d;border-radius:8px;font-size:13px;font-weight:bold;}
     </style>
 </head>
 <body>
-    <!-- Django flash messages (success/error banners) -->
-    {% if messages %}
-    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
-        {% for message in messages %}
-        <div style="background:{% if message.tags == 'success' %}#dcfce7{% elif message.tags == 'danger' %}#fee2e2{% else %}#fef9c3{% endif %};
-                    border-radius:8px;padding:12px 16px;margin-bottom:8px;
-                    color:{% if message.tags == 'success' %}#15803d{% elif message.tags == 'danger' %}#b91c1c{% else %}#a16207{% endif %};
-                    font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            {{ message }}
-        </div>
-        {% endfor %}
+<header class="navbar">
+    <div class="logo">IIPMS</div>
+    <nav><ul>
+        <li><a href="/student/">Dashboard</a></li>
+        <li><a href="/student/internships/">Internships</a></li>
+        <li><a href="/student/matches/">Matches</a></li>
+        <li><a href="/student/log/">Logs</a></li>
+        <li><a href="/logout/" class="btn">Logout</a></li>
+    </ul></nav>
+</header>
+
+{% if messages %}
+<div style="position:fixed;top:70px;right:20px;z-index:9999;width:300px;">
+    {% for message in messages %}
+    <div style="background:#dcfce7;border-radius:8px;padding:12px;margin-bottom:8px;color:#15803d;font-size:14px;font-weight:bold;">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<section class="page-title">
+    <h1>Your Recommended Matches</h1>
+    <p>Ranked by skill, industry, work type and location</p>
+</section>
+
+<div class="page-wrap">
+
+    <!-- Profile summary -->
+    <div class="profile-summary">
+        <h3 style="margin:0 0 10px;color:#4f6ef7;font-size:15px;">Your Matching Profile</h3>
+        {% if profile.skills %}
+            <span class="info-badge">🎯 Skills: {{ profile.skills }}</span>
+        {% else %}
+            <span class="info-badge" style="color:#b91c1c;border-color:#fca5a5;">⚠️ No skills added</span>
+        {% endif %}
+        {% if profile.industry_pref %}
+            <span class="info-badge">🏢 {{ profile.industry_pref }}</span>
+        {% else %}
+            <span class="info-badge" style="color:#888;">Industry: Not set</span>
+        {% endif %}
+        {% if profile.work_type %}
+            <span class="info-badge">💼 {{ profile.work_type }}</span>
+        {% else %}
+            <span class="info-badge" style="color:#888;">Work type: Not set</span>
+        {% endif %}
+        {% if profile.location_pref %}
+            <span class="info-badge">📍 {{ profile.location_pref }}</span>
+        {% else %}
+            <span class="info-badge" style="color:#888;">Location: Not set</span>
+        {% endif %}
+        <p style="font-size:12px;color:#888;margin-top:8px;">
+            Update your profile on your <a href="/student/profile/edit/" style="color:#4f6ef7;">Dashboard</a> to improve match results.
+        </p>
+    </div>
+
+    {% if not profile.skills %}
+    <div class="warn-box">
+        ⚠️ Your profile is incomplete. Add your skills, industry preference, work type and location to get accurate match results.
+        Go to <a href="/student/profile/edit/" style="color:#a16207;font-weight:bold;">Edit Profile</a> to update.
     </div>
     {% endif %}
 
-
-    <header class="navbar">
-        <div class="logo">IIPMS</div>
-        <nav>
-            <ul>
-                <li><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
-                <li><a href="{% url 'internship_list' %}">Internships</a></li>
-                <li><a href="{% url 'matches' %}">Matches</a></li>
-                <li><a href="{% url 'weekly_log' %}">Logs</a></li>
-                <li><a href="/logout/" class="btn">Logout</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <section class="page-title">
-        <h1>Your Recommended Matches</h1>
-        <p>Ranked by skill, industry, work type and location — with a breakdown of why each matched</p>
-    </section>
-
-    <div class="page-wrap">
-
-        <!-- Student profile used for matching -->
-        <div class="profile-summary">
-            <h3>Your Matching Profile</h3>
-            <div id="profileSummary"></div>
-            <p style="font-size: 12px; color: #888; margin-top: 8px;">
-                Update your profile on your <a href="{% url 'student_dashboard' %}" style="color: #4f6ef7;">Dashboard</a>
-                to improve your match results.
-            </p>
+    <!-- Match results -->
+    {% for item in ranked %}
+    <div class="match-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="flex:1;">
+                <h3 style="margin:0 0 4px;">{{ item.internship.title }}</h3>
+                <p style="font-size:13px;color:#555;margin:2px 0;">
+                    🏢 {{ item.internship.company }} &nbsp;|&nbsp; 📍 {{ item.internship.location }}
+                    {% if item.internship.industry %}&nbsp;|&nbsp; {{ item.internship.industry }}{% endif %}
+                </p>
+                {% if item.internship.stipend %}<p style="font-size:13px;color:#555;margin:2px 0;">💰 {{ item.internship.stipend }}</p>{% endif %}
+                <div style="margin:6px 0;">
+                    {% for skill in item.internship.skills|split_comma %}
+                    <span class="skill-badge">{{ skill }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;padding-left:12px;">
+                <span class="{% if item.score >= 70 %}score-high{% elif item.score >= 40 %}score-med{% else %}score-low{% endif %}">{{ item.score }}</span>
+                <p style="font-size:10px;color:#aaa;margin:0;">/ 100</p>
+            </div>
         </div>
 
-        <!-- Warning if profile is incomplete -->
-        <div class="warn-box" id="incompleteWarning" style="display: none;">
-            ⚠️ Your profile is incomplete. Add your skills, industry preference, work type,
-            and location to get accurate match results.
-            Go to <a href="{% url 'student_dashboard' %}" style="color: #a16207; font-weight: bold;">Dashboard</a> to update.
+        <div class="bar-bg">
+            <div style="height:10px;border-radius:8px;width:{{ item.score }}%;background:{% if item.score >= 70 %}#22c55e{% elif item.score >= 40 %}#f59e0b{% else %}#ef4444{% endif %};"></div>
         </div>
 
-        <!-- Sorted match results -->
-        <div id="matchResults"></div>
+        <div class="why-box">
+            <strong style="font-size:12px;color:#4f6ef7;">Why this matched you:</strong>
+            {% for reason in item.reasons %}
+            <p style="font-size:12px;color:#555;margin:3px 0;">• {{ reason }}</p>
+            {% endfor %}
+        </div>
 
+        {% if item.already_applied %}
+        <span class="applied-badge">✓ Applied</span>
+        {% else %}
+        <form method="POST" action="/student/apply/{{ item.internship.id }}/" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="apply-btn">Apply Now</button>
+        </form>
+        {% endif %}
     </div>
+    {% empty %}
+    <div style="text-align:center;padding:40px;color:#aaa;">
+        <p style="font-size:36px;">🎯</p>
+        <p>No internships available to match right now.</p>
+    </div>
+    {% endfor %}
+</div>
 
-    <footer>
-        <p>© 2026 IIPMS | Matches</p>
-    </footer>
-
-    <script src="{% static 'js/auth.js' %}"></script>
-    <script src="{% static 'js/data.js' %}"></script>
-    <script>
-
-        // Get logged in student
-        
-
-
-        // ── Show profile summary at the top ──
-        function showProfileSummary() {
-            var box = document.getElementById("profileSummary");
-            box.innerHTML = "";
-
-            // Check if profile is complete enough for good matching
-            var incomplete = false;
-
-            if (user.skills && user.skills !== "") {
-                box.innerHTML += '<span class="info-badge">🎯 Skills: ' + user.skills + '</span> ';
-            } else {
-                box.innerHTML += '<span class="info-badge" style="color:#b91c1c;border-color:#fca5a5;">⚠️ No skills added</span> ';
-                incomplete = true;
-            }
-
-            if (user.industryPref && user.industryPref !== "") {
-                box.innerHTML += '<span class="info-badge">🏢 Industry: ' + user.industryPref + '</span> ';
-            } else {
-                box.innerHTML += '<span class="info-badge" style="color:#888;">Industry: Not set</span> ';
-                incomplete = true;
-            }
-
-            if (user.workType && user.workType !== "") {
-                box.innerHTML += '<span class="info-badge">💼 Work type: ' + user.workType + '</span> ';
-            } else {
-                box.innerHTML += '<span class="info-badge" style="color:#888;">Work type: Not set</span> ';
-            }
-
-            if (user.locationPref && user.locationPref !== "") {
-                box.innerHTML += '<span class="info-badge">📍 Location: ' + user.locationPref + '</span> ';
-            } else {
-                box.innerHTML += '<span class="info-badge" style="color:#888;">Location: Not set</span> ';
-            }
-
-            if (incomplete) {
-                document.getElementById("incompleteWarning").style.display = "block";
-            }
-        }
-
-        showProfileSummary();
-
-
-        // ── Run the full matching engine and show results ──
-        function showMatches() {
-            var allJobs = getAllInternships();
-            var myApps  = getStudentApplications(user.id);
-
-            // Build list of already-applied job IDs
-            var appliedIds = [];
-            for (var a = 0; a < myApps.length; a++) {
-                appliedIds.push(myApps[a].internshipId);
-            }
-
-            // Score every job using the full matching engine
-            var scoredJobs = [];
-
-            for (var i = 0; i < allJobs.length; i++) {
-                var job = allJobs[i];
-
-                // Call the full matching engine from data.js
-                var result = getFullMatchResult(user, job);
-
-                scoredJobs.push({
-                    job:     job,
-                    score:   result.score,
-                    reasons: result.reasons
-                });
-            }
-
-            // Sort from highest score to lowest (bubble sort — beginner style)
-            for (var x = 0; x < scoredJobs.length - 1; x++) {
-                for (var y = 0; y < scoredJobs.length - 1 - x; y++) {
-                    if (scoredJobs[y].score < scoredJobs[y + 1].score) {
-                        var temp         = scoredJobs[y];
-                        scoredJobs[y]     = scoredJobs[y + 1];
-                        scoredJobs[y + 1] = temp;
-                    }
-                }
-            }
-
-            var container = document.getElementById("matchResults");
-            container.innerHTML = "";
-
-            for (var k = 0; k < scoredJobs.length; k++) {
-                var job     = scoredJobs[k].job;
-                var score   = scoredJobs[k].score;
-                var reasons = scoredJobs[k].reasons;
-
-                // Pick bar colour
-                var barColour   = "bar-red";
-                var scoreColour = "score-low";
-                if (score >= 70) {
-                    barColour   = "bar-green";
-                    scoreColour = "score-high";
-                } else if (score >= 40) {
-                    barColour   = "bar-orange";
-                    scoreColour = "score-medium";
-                }
-
-                // Build skill pills
-                var skillArray = job.skills.split(",");
-                var pills = "";
-                for (var s = 0; s < skillArray.length; s++) {
-                    pills += '<span class="skill-badge">' + skillArray[s].trim() + '</span>';
-                }
-
-                // Build reasons list — this explains WHY it matched
-                var reasonsHtml = "";
-                for (var r = 0; r < reasons.length; r++) {
-                    reasonsHtml += '<p>• ' + reasons[r] + '</p>';
-                }
-
-                // Check if already applied
-                var alreadyApplied = false;
-                for (var n = 0; n < appliedIds.length; n++) {
-                    if (appliedIds[n] === job.id) {
-                        alreadyApplied = true;
-                    }
-                }
-
-                var actionBtn = "";
-                if (alreadyApplied) {
-                    actionBtn = '<span style="padding:7px 14px;background:#dcfce7;color:#15803d;border-radius:8px;font-size:13px;font-weight:bold;">✓ Applied</span>';
-                } else {
-                    actionBtn = '<button onclick="applyNow(' + job.id + ', \'' + job.title + '\', \'' + job.company + '\')" style="padding:7px 16px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;font-size:13px;">Apply</button>';
-                }
-
-                container.innerHTML +=
-                    '<div class="match-card">' +
-
-                        '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
-                            '<div style="flex:1;">' +
-                                '<h3 style="margin:0 0 4px;">' + job.title + '</h3>' +
-                                '<p style="font-size:13px;color:#555;margin:2px 0;">🏢 ' + job.company + ' &nbsp;|&nbsp; 📍 ' + job.location + (job.industry ? ' &nbsp;|&nbsp; ' + job.industry : '') + '</p>' +
-                                (job.stipend ? '<p style="font-size:13px;color:#555;margin:2px 0;">💰 ' + job.stipend + '</p>' : '') +
-                                '<div style="margin:6px 0;">' + pills + '</div>' +
-                            '</div>' +
-                            '<div style="text-align:right;flex-shrink:0;padding-left:12px;">' +
-                                '<span class="' + scoreColour + '">' + score + '</span>' +
-                                '<p style="font-size:10px;color:#aaa;margin:0;">/ 100</p>' +
-                            '</div>' +
-                        '</div>' +
-
-                        '<div class="bar-bg"><div class="bar-fill ' + barColour + '" style="width:' + score + '%;"></div></div>' +
-
-                        /* Why matched breakdown */
-                        '<div class="why-box">' +
-                            '<strong>Why this matched you:</strong>' +
-                            reasonsHtml +
-                        '</div>' +
-
-                        actionBtn +
-                    '</div>';
-            }
-        }
-
-        showMatches();
-
-
-        // Apply for a job
-        function applyNow(jobId, jobTitle, companyName) {
-            var result = saveApplication(
-                user.id,
-                user.firstName + " " + user.lastName,
-                user.email,
-                user.skills || "",
-                jobId,
-                jobTitle,
-                companyName
-            );
-
-            if (result === "success") {
-                alert("Applied for: " + jobTitle + "!");
-                showMatches();
-            } else {
-                alert(result);
-            }
-        }
-
-    </script>
-
-<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
+<form id="logout-form" method="POST" action="/logout/">{% csrf_token %}</form>
+<footer><p>© 2026 IIPMS | Matches</p></footer>
 </body>
 </html>

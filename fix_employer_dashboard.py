@@ -1,4 +1,17 @@
-{% load static %}
+import re
+
+f = 'iipms_app/templates/iipms_app/employer_dashboard.html'
+txt = open(f).read()
+
+# Find the applications tab section and replace with full pipeline UI
+# First check what tab structure exists
+if 'tab-panel' in txt or 'showTab' in txt:
+    print("Tab structure found - patching applications section")
+else:
+    print("No tab structure - will inject full dashboard")
+
+# Replace the entire dashboard content with a proper version
+new_dashboard = """{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -321,4 +334,7 @@ document.getElementById('interviewModal').addEventListener('click', function(e){
 });
 </script>
 </body>
-</html>
+</html>"""
+
+open(f, 'w').write(new_dashboard)
+print("employer_dashboard.html completely rewritten")

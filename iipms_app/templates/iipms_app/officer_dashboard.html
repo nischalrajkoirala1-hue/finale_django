@@ -1,4 +1,5 @@
 {% load static %}
+{% load custom_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,1534 +7,393 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Officer Dashboard - IIPMS</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-
     <style>
-        .avatar-circle {
-            width: 80px; height: 80px; border-radius: 50%;
-            background-color: #e8ecff; border: 3px solid #4f6ef7;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 36px; margin: 0 auto 10px auto; overflow: hidden;
-        }
-
-        .tab-btn { padding:8px 16px; border:1.5px solid #ddd; border-radius:20px; background:white; cursor:pointer; font-size:13px; font-weight:bold; color:#555; margin-right:6px; margin-bottom:10px; }
-        .tab-btn.active { background:#4f6ef7; color:white; border-color:#4f6ef7; }
-        .tab-panel { display:none; }
-        .tab-panel.active { display:block; }
-
-        .badge { display:inline-block; padding:3px 12px; border-radius:12px; font-size:12px; font-weight:bold; }
-        .badge-pending   { background:#fef9c3; color:#a16207; }
-        .badge-interview { background:#dbeafe; color:#1d4ed8; }
-        .badge-hired     { background:#dcfce7; color:#15803d; }
-        .badge-rejected  { background:#fee2e2; color:#b91c1c; }
-        .badge-other     { background:#ede9fe; color:#6d28d9; }
-
-        .info-box  { border-radius:8px; padding:9px 13px; margin-top:6px; font-size:13px; }
-        .box-blue  { background:#eff6ff; border:1px solid #bfdbfe; }
-        .box-green { background:#f0fdf4; border:1px solid #bbf7d0; }
-        .box-red   { background:#fff1f2; border:1px solid #fecdd3; }
-        .box-purple{ background:#f5f3ff; border:1px solid #ddd6fe; }
-
-        .step-card { display:flex; align-items:flex-start; gap:10px; padding:12px; border:1.5px solid #eee; border-radius:10px; margin-bottom:8px; background:white; }
-        .step-card.high   { border-left:5px solid #ef4444; }
-        .step-card.medium { border-left:5px solid #f59e0b; }
-        .step-card.low    { border-left:5px solid #22c55e; }
-
-        .log-card { background:white; border-radius:10px; padding:14px; margin-bottom:10px; border-left:4px solid #4f6ef7; box-shadow:0 1px 5px rgba(0,0,0,0.06); }
-
-        table.data-table { width:100%; border-collapse:collapse; font-size:13px; }
-        table.data-table th { background:#f0f2ff; padding:9px 10px; text-align:left; border-bottom:2px solid #dde1f3; }
-        table.data-table td { padding:8px 10px; border-bottom:1px solid #eee; color:#444; }
-
-        /* ── Toast popup box ── */
-        /* Hidden by default, shown by JavaScript using style.display */
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background-color: #15803d;
-            color: white;
-            padding: 14px 24px;
-            border-radius: 10px;
-            font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-            z-index: 9999;
-            display: none;
-        }
+        .tab-btn{padding:9px 18px;background:#f1f5f9;border:none;border-radius:8px;cursor:pointer;font-size:13px;margin-right:6px;margin-bottom:8px;transition:all 0.2s;}
+        .tab-btn.active{background:#4f6ef7;color:white;}
+        .tab-panel{display:none;}
+        .tab-panel.active{display:block;}
+        .card{background:white;padding:15px;border-radius:10px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08);}
+        .badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;}
+        .btn-approve{padding:6px 14px;background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:6px;cursor:pointer;font-size:13px;margin-right:6px;}
+        .btn-reject{padding:6px 14px;background:#fee2e2;color:#b91c1c;border:1.5px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:13px;}
+        .btn-primary{padding:7px 14px;background:#4f6ef7;color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;}
+        input,textarea,select{padding:10px 14px;border:1px solid #cbd5e1;border-radius:6px;font-size:14px;outline:none;font-family:Arial,sans-serif;box-sizing:border-box;}
+        .section-title{font-size:16px;font-weight:bold;color:#1e293b;margin:16px 0 12px;}
+        .profile-card{min-width:220px;}
     </style>
 </head>
 <body>
-    <!-- Django flash messages (success/error banners) -->
-    {% if messages %}
-    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
-        {% for message in messages %}
-        <div style="background:{% if message.tags == 'success' %}#dcfce7{% elif message.tags == 'danger' %}#fee2e2{% else %}#fef9c3{% endif %};
-                    border-radius:8px;padding:12px 16px;margin-bottom:8px;
-                    color:{% if message.tags == 'success' %}#15803d{% elif message.tags == 'danger' %}#b91c1c{% else %}#a16207{% endif %};
-                    font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            {{ message }}
+<header class="navbar">
+    <div class="logo">IIPMS</div>
+    <nav><ul>
+        <li><a href="/officer/">Dashboard</a></li>
+        <li><a href="/reports/">Reports</a></li>
+        <li><a href="/logout/" class="btn">Logout</a></li>
+    </ul></nav>
+</header>
+
+{% if messages %}
+<div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
+    {% for message in messages %}
+    <div style="background:{% if message.tags == 'success' %}#dcfce7{% else %}#fee2e2{% endif %};border-radius:8px;padding:12px 16px;margin-bottom:8px;color:{% if message.tags == 'success' %}#15803d{% else %}#b91c1c{% endif %};font-size:14px;font-weight:bold;">{{ message }}</div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="dashboard">
+
+    <!-- PROFILE CARD -->
+    <div class="profile-card">
+        <div class="avatar-circle">
+            {% if user.photo %}<img src="{{ user.photo.url }}" alt="Photo">{% else %}👩‍💼{% endif %}
         </div>
-        {% endfor %}
+        <h2>{{ full_name }}</h2>
+        <p style="font-size:13px;color:#888;">{{ email }}</p>
+        <p style="font-size:12px;color:#aaa;margin-top:4px;">Placement Officer</p>
+        <div style="margin-top:12px;padding:10px;background:#f8faff;border-radius:8px;font-size:13px;">
+            <p>🎓 <strong>{{ student_count }}</strong> Students</p>
+            <p>💼 <strong>{{ internship_count }}</strong> Internships</p>
+            <p>📋 <strong>{{ application_count }}</strong> Applications</p>
+            <p>✅ <strong>{{ placed_count }}</strong> Placed</p>
+        </div>
+        <a href="/reports/" style="display:block;margin-top:12px;padding:8px;background:#4f6ef7;color:white;border-radius:8px;text-align:center;text-decoration:none;font-size:13px;">📊 View Reports</a>
     </div>
-    {% endif %}
 
+    <!-- MAIN CONTENT -->
+    <div class="dashboard-content">
 
-    <header class="navbar">
-        <div class="logo">IIPMS</div>
-        <nav>
-            <ul>
-                <li><a href="{% url 'officer_dashboard' %}">Dashboard</a></li>
-                <li><a href="{% url 'reports' %}">Reports</a></li>
-                <li><a href="/logout/" class="btn">Logout</a></li>
-            </ul>
-        </nav>
-    </header>
-
-    <section class="dashboard">
-
-        <!-- Profile Card — no default image -->
-        <div class="profile-card">
-            <div class="avatar-circle" id="profileAvatar">👩‍💼</div>
-            <h2 id="profileName">Loading...</h2>
-            <p style="color:#888;font-size:13px;">Placement Officer</p>
-            <p id="profileEmail" style="color:#aaa;font-size:12px;margin-top:4px;"></p>
+        <div class="stats">
+            <div class="stat-box"><h3>{{ student_count }}</h3><p>Students</p></div>
+            <div class="stat-box"><h3>{{ internship_count }}</h3><p>Internships</p></div>
+            <div class="stat-box"><h3>{{ application_count }}</h3><p>Applications</p></div>
+            <div class="stat-box"><h3>{{ placed_count }}</h3><p>Placed</p></div>
         </div>
 
-        <div class="dashboard-content">
-
-            <!-- Stats -->
-            <div class="stats">
-                <div class="stat-box"><h3 id="statStudents">0</h3><p>Students</p></div>
-                <div class="stat-box"><h3 id="statInternships">0</h3><p>Internships</p></div>
-                <div class="stat-box"><h3 id="statApps">0</h3><p>Applications</p></div>
-            </div>
-
-            <!-- Tab buttons -->
-            <div style="margin-top:18px;">
-                <button class="tab-btn active" onclick="showTab('progress', this)">📊 Track Progress</button>
-                <button class="tab-btn"        onclick="showTab('nextsteps', this)">🎯 Next Steps</button>
-                <button class="tab-btn"        onclick="showTab('status', this)">📋 App Status</button>
-                <button class="tab-btn"        onclick="showTab('logs', this)">📝 Weekly Logs</button>
-                <button class="tab-btn"        onclick="showTab('verify', this)">🏢 Verifications</button>
-                <button class="tab-btn"        onclick="showTab('offers', this)">📜 Offers</button>
-                <button class="tab-btn"        onclick="showTab('assign', this)">👨‍🎓 Assign Supervisor</button>
-                <button class="tab-btn"        onclick="showTab('evals', this)">⭐ Evaluations</button>
-                <button class="tab-btn"        onclick="showTab('eligibility', this)">📋 Eligibility</button>
-                <button class="tab-btn"        onclick="showTab('completion', this)">🎓 Completion</button>
-            </div>
-
-
-            <!-- ── TAB 1: TRACK PROGRESS ── -->
-            <div class="tab-panel active" id="tab-progress">
-                <h2>Set Next Step for a Student</h2>
-
-                <div class="card" style="background:#f7f8ff;margin-bottom:18px;">
-
-                    <!-- Step 1: Choose student -->
-                    <div class="input-group">
-                        <label><strong>Step 1:</strong> Select a Student</label>
-                        <select id="studentSelect" onchange="loadStudentApps()">
-                            <option value="">-- Choose a student --</option>
-                        </select>
-                    </div>
-
-                    <!-- Step 2: Their applications — shown after student is selected -->
-                    <div id="appSelectSection" style="display:none;">
-                        <div class="input-group">
-                            <label><strong>Step 2:</strong> Select Their Application</label>
-                            <select id="appSelect">
-                                <option value="">-- Choose an application --</option>
-                            </select>
-                        </div>
-
-                        <!-- Step 3: Choose next step -->
-                        <div class="input-group">
-                            <label><strong>Step 3:</strong> Choose Next Step</label>
-                            <select id="nextStepSelect">
-                                <option value="">-- Choose a next step --</option>
-                                <option value="Submit weekly log">Submit weekly log</option>
-                                <option value="Prepare for interview">Prepare for interview</option>
-                                <option value="Follow up with employer">Follow up with employer</option>
-                                <option value="Complete profile skills">Complete profile skills</option>
-                                <option value="Confirm offer acceptance">Confirm offer acceptance</option>
-                                <option value="Attend placement orientation">Attend placement orientation</option>
-                                <option value="Provide employer feedback">Provide employer feedback</option>
-                            </select>
-                        </div>
-
-                        <!-- Step 4: Optional note -->
-                        <div class="input-group">
-                            <label><strong>Step 4:</strong> Add a Note (optional)</label>
-                            <input type="text" id="officerNote" placeholder="e.g. Please complete this by Friday">
-                        </div>
-
-                        <button onclick="sendNextStep()"
-                            style="padding:9px 20px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;">
-                            ✉️ Send to Student and Employer
-                        </button>
-
-                        <span id="sendMsg" style="font-size:13px;margin-left:10px;"></span>
-                    </div>
-                </div>
-
-                <!-- Progress table -->
-                <h3 style="margin-bottom:10px;">All Progress Entries</h3>
-                <div style="overflow-x:auto;">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Student</th>
-                                <th>Internship</th>
-                                <th>Stage</th>
-                                <th>Notes</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody id="progressTableBody">
-                            <tr>
-                                <td colspan="5" style="text-align:center;color:#aaa;padding:16px;">
-                                    No entries yet.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-
-            <!-- ── TAB 2: NEXT STEPS ── -->
-            <div class="tab-panel" id="tab-nextsteps">
-                <h2>Auto Next Steps</h2>
-                <p style="font-size:13px;color:#666;margin-bottom:14px;">
-                    These steps are generated automatically from live system data.
-                </p>
-
-                <!-- Auto-generated steps appear here -->
-                <div id="autoStepsList"></div>
-
-                <!-- Add a custom step -->
-                <div class="card" style="background:#f7f8ff;margin-top:20px;">
-                    <h4 style="color:#4f6ef7;margin-top:0;">Add Your Own Step</h4>
-
-                    <div class="input-group">
-                        <label>Description</label>
-                        <input type="text" id="customStepInput" placeholder="e.g. Call students with no log this week">
-                    </div>
-
-                    <div class="input-group">
-                        <label>Priority</label>
-                        <select id="customStepPriority">
-                            <option value="high">🔴 High</option>
-                            <option value="medium">🟡 Medium</option>
-                            <option value="low">🟢 Low</option>
-                        </select>
-                    </div>
-
-                    <button onclick="addCustomStep()"
-                        style="padding:9px 20px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;">
-                        Add Step
-                    </button>
-                </div>
-
-                <div id="customStepsList" style="margin-top:14px;"></div>
-            </div>
-
-
-            <!-- ── TAB 3: APP STATUS ── -->
-            <div class="tab-panel" id="tab-status">
-                <h2>All Application Statuses</h2>
-                <p style="font-size:13px;color:#666;margin-bottom:14px;">
-                    Full overview of every application in the system.
-                </p>
-                <div id="allStatusList">
-                    <p style="color:#888;">No applications yet.</p>
-                </div>
-            </div>
-
-
-            <!-- ── TAB 4: WEEKLY LOGS ── -->
-            <div class="tab-panel" id="tab-logs">
-                <h2>Student Weekly Logs</h2>
-                <p style="font-size:13px;color:#666;margin-bottom:14px;">
-                    All weekly logs submitted by all students across all companies.
-                </p>
-                <div id="allLogsList">
-                    <p style="color:#888;">No logs yet.</p>
-                </div>
-
-
-            <!-- ── TAB 5: VERIFICATIONS ── -->
-            <div class="tab-panel" id="tab-verify">
-                <h2>Employer Verification Requests</h2>
-                <p style="font-size:13px;color:#666;margin-bottom:14px;">
-                    Review and approve employer registration requests before they can post internships.
-                </p>
-                <div id="verifyList">
-                    <p style="color:#888;">No verification requests yet.</p>
-                </div>
-            </div>
-
-
-            <!-- ── TAB 6: OFFER APPROVALS ── -->
-            <div class="tab-panel" id="tab-offers">
-                <h2>Internship Offer Approvals</h2>
-                <p style="font-size:13px;color:#666;margin-bottom:14px;">
-                    Review offers issued by employers before they are sent to students.
-                </p>
-                <div id="offerApprovalList">
-                    <p style="color:#888;">No offers pending approval.</p>
-                </div>
-            </div>
-
-
-            <!-- ── TAB 7: ASSIGN SUPERVISOR ── -->
-            <div class="tab-panel" id="tab-assign">
-                <h2>Assign Academic Supervisors</h2>
-                <p style="font-size:13px;color:#666;margin-bottom:14px;">
-                    Link students with their academic supervisors for oversight and evaluation.
-                </p>
-                <div class="card" style="background:#f7f8ff;margin-bottom:18px;">
-                    <div class="input-group">
-                        <label><strong>Step 1:</strong> Select Student</label>
-                        <select id="assignStudentSelect">
-                            <option value="">-- Choose a student --</option>
-                        </select>
-                    </div>
-                    <div class="input-group">
-                        <label><strong>Step 2:</strong> Select Supervisor</label>
-                        <select id="assignSupervisorSelect">
-                            <option value="">-- Choose a supervisor --</option>
-                        </select>
-                    </div>
-                    <button onclick="doAssign()"
-                        style="padding:9px 20px;background:#4f6ef7;color:white;border:none;border-radius:8px;cursor:pointer;">
-                        ✅ Assign Supervisor
-                    </button>
-                    <span id="assignMsg" style="font-size:13px;margin-left:10px;"></span>
-                </div>
-                <h3 style="margin-bottom:10px;">Current Assignments</h3>
-                <div id="assignmentsList">
-                    <p style="color:#888;">No assignments yet.</p>
-                </div>
-            </div>
-
-
-            <!-- ── TAB 8: EVALUATIONS ── -->
-            <div class="tab-panel" id="tab-evals">
-                <h2>All Evaluations</h2>
-                <p style="font-size:13px;color:#666;margin-bottom:14px;">
-                    Evaluations submitted by employers and academic supervisors.
-                </p>
-                <div id="allEvalsList">
-                    <p style="color:#888;">No evaluations yet.</p>
-                </div>
-            </div>
-
-
-            <!-- ── TAB 9: ELIGIBILITY ── -->
-            <div class="tab-panel" id="tab-eligibility">
-                <h2>Student Eligibility Check</h2>
-                <p style="font-size:13px;color:#666;margin-bottom:14px;">
-                    Review student profiles and assess eligibility to begin internships.
-                </p>
-                <div id="eligibilityList">
-                    <p style="color:#888;">No students registered yet.</p>
-                </div>
-            </div>
-
-
-            <!-- ── TAB 10: COMPLETION ── -->
-            <div class="tab-panel" id="tab-completion">
-                <h2>Internship Completion</h2>
-                <p style="font-size:13px;color:#666;margin-bottom:14px;">
-                    Mark internships as complete and generate completion certificates.
-                </p>
-
-                <div class="card" style="background:#f7f8ff;margin-bottom:18px;">
-                    <div class="input-group">
-                        <label>Select Student</label>
-                        <select id="completionStudentSelect" onchange="loadStudentJobsForCompletion()">
-                            <option value="">-- Choose a student --</option>
-                        </select>
-                    </div>
-                    <div class="input-group" id="completionJobSection" style="display:none;">
-                        <label>Select Internship</label>
-                        <select id="completionJobSelect"></select>
-                    </div>
-                    <div class="input-group" id="completionDateSection" style="display:none;">
-                        <label>Completion Date</label>
-                        <input type="text" id="completionDate" placeholder="e.g. 30 September 2026">
-                    </div>
-                    <button id="completionBtn" onclick="markComplete()" style="display:none;padding:9px 20px;background:#22c55e;color:white;border:none;border-radius:8px;cursor:pointer;">
-                        🎓 Mark as Complete
-                    </button>
-                    <span id="completionMsg" style="font-size:13px;margin-left:10px;color:#15803d;"></span>
-                </div>
-
-                <h3 style="margin-bottom:10px;">Completed Internships</h3>
-                <div id="completedList">
-                    <p style="color:#888;">No completions recorded yet.</p>
-                </div>
-            </div>
-
+        <div style="margin-top:18px;display:flex;flex-wrap:wrap;">
+            <button class="tab-btn active" onclick="showTab('overview',this)">📊 Overview</button>
+            <button class="tab-btn" onclick="showTab('verify',this)">✅ Verifications {% if verify_requests.count > 0 %}<span style="background:#ef4444;color:white;border-radius:10px;padding:1px 6px;font-size:11px;">{{ verify_requests.count }}</span>{% endif %}</button>
+            <button class="tab-btn" onclick="showTab('offers',this)">📄 Offer Approvals</button>
+            <button class="tab-btn" onclick="showTab('progress',this)">📈 Progress</button>
+            <button class="tab-btn" onclick="showTab('logs',this)">📝 Weekly Logs</button>
+            <button class="tab-btn" onclick="showTab('assign',this)">👥 Assign Supervisors</button>
+            <button class="tab-btn" onclick="showTab('evals',this)">⭐ Evaluations</button>
+            <button class="tab-btn" onclick="showTab('eligibility',this)">🎓 Eligibility</button>
+            <button class="tab-btn" onclick="showTab('completion',this)">🏆 Completion</button>
         </div>
-    </section>
 
-    <footer><p>© 2026 IIPMS | Placement Officer Dashboard</p></footer>
-
-
-    <!-- Toast popup -->
-    <div class="toast" id="toastBox">✓ Sent!</div>
-
-    <script src="{% static 'js/auth.js' %}"></script>
-    <script src="{% static 'js/data.js' %}"></script>
-    <script>
-
-        // ── Get logged in user ──
-        
-
-        if (user !== null && user.role !== "officer") {
-            ;
-        }
-
-        document.getElementById("profileName").textContent  = user.firstName + " " + user.lastName;
-        document.getElementById("profileEmail").textContent = user.email;
-
-        if (user.photo !== "" && user.photo !== null && user.photo !== undefined) {
-            document.getElementById("profileAvatar").innerHTML =
-                '<img src="' + user.photo + '" style="width:100%;height:100%;object-fit:cover;">';
-        }
-
-
-
-        // ── Toast popup functions ──
-
-        // This variable keeps track of the timer
-        var toastTimer = 0;
-
-        // showToast: shows a green message box at the bottom right
-        function showToast(message) {
-            var box = document.getElementById("toastBox");
-
-            // Write the message and make the box visible
-            box.textContent = "✓ " + message;
-            box.style.display = "block";
-
-            // If a previous timer is still running, cancel it first
-            if (toastTimer !== 0) {
-                clearTimeout(toastTimer);
-            }
-
-            // After 2.5 seconds, call hideToast to hide the box
-            toastTimer = setTimeout(hideToast, 2500);
-        }
-
-        // hideToast: hides the message box
-        function hideToast() {
-            var box = document.getElementById("toastBox");
-            box.style.display = "none";
-            toastTimer = 0;
-        }
-
-        // ── Load stats ──
-        function loadStats() {
-            var allUsers    = JSON.parse(localStorage.getItem("users")) || [];
-            var internships = getAllInternships();
-            var apps        = getAllApplications();
-
-            var studentCount = 0;
-            for (var i = 0; i < allUsers.length; i++) {
-                if (allUsers[i].role === "student") studentCount++;
-            }
-
-            document.getElementById("statStudents").textContent    = studentCount;
-            document.getElementById("statInternships").textContent = internships.length;
-            document.getElementById("statApps").textContent        = apps.length;
-        }
-
-        loadStats();
-
-
-        // ── Fill student dropdown ──
-        function fillStudentDropdown() {
-            var allUsers = JSON.parse(localStorage.getItem("users")) || [];
-            var select   = document.getElementById("studentSelect");
-            select.innerHTML = '<option value="">-- Choose a student --</option>';
-
-            for (var i = 0; i < allUsers.length; i++) {
-                if (allUsers[i].role === "student") {
-                    var s = allUsers[i];
-                    select.innerHTML +=
-                        '<option value="' + s.id + '">' +
-                            s.firstName + ' ' + s.lastName + ' (' + s.email + ')' +
-                        '</option>';
-                }
-            }
-        }
-
-        fillStudentDropdown();
-
-
-        // When a student is selected, show their applications
-        function loadStudentApps() {
-            var studentId = document.getElementById("studentSelect").value;
-            var section   = document.getElementById("appSelectSection");
-
-            if (studentId === "") {
-                section.style.display = "none";
-                return;
-            }
-
-            section.style.display = "block";
-
-            var allApps     = getAllApplications();
-            var studentApps = [];
-
-            // Find applications belonging to this student
-            // Use == because id might be stored as number or string
-            for (var i = 0; i < allApps.length; i++) {
-                if (allApps[i].userId == studentId) {
-                    studentApps.push(allApps[i]);
-                }
-            }
-
-            var appSelect = document.getElementById("appSelect");
-            appSelect.innerHTML = '<option value="">-- Choose an application --</option>';
-
-            if (studentApps.length === 0) {
-                appSelect.innerHTML = '<option value="">This student has no applications yet</option>';
-                return;
-            }
-
-            for (var j = 0; j < studentApps.length; j++) {
-                var app = studentApps[j];
-                appSelect.innerHTML +=
-                    '<option value="' + app.id + '">' +
-                        app.internshipTitle + ' @ ' + (app.companyName || "Unknown") +
-                        '  [' + app.status + ']' +
-                    '</option>';
-            }
-        }
-
-
-        // Send next step to student and employer
-        function sendNextStep() {
-            var studentId = document.getElementById("studentSelect").value;
-            var appId     = document.getElementById("appSelect").value;
-            var nextStep  = document.getElementById("nextStepSelect").value;
-            var note      = document.getElementById("officerNote").value.trim();
-            var msgBox    = document.getElementById("sendMsg");
-
-            // Validate
-            if (studentId === "") {
-                msgBox.style.color = "red";
-                msgBox.textContent = "Please select a student.";
-                return;
-            }
-            if (appId === "") {
-                msgBox.style.color = "red";
-                msgBox.textContent = "Please select an application.";
-                return;
-            }
-            if (nextStep === "") {
-                msgBox.style.color = "red";
-                msgBox.textContent = "Please choose a next step.";
-                return;
-            }
-
-            // appId comes from a select, so convert to number
-            var appIdNum = parseInt(appId);
-
-            // Save the next step on the application
-            officerSetNextStep(appIdNum, nextStep, note);
-
-            // Find the application so we know the student name, company, and job title
-            var allApps     = getAllApplications();
-            var selectedApp = null;
-
-            for (var i = 0; i < allApps.length; i++) {
-                if (allApps[i].id === appIdNum) {
-                    selectedApp = allApps[i];
-                }
-            }
-
-            // Send notification to the student
-            var officerName = user.firstName + " " + user.lastName + " (Placement Officer)";
-
-            sendNotification(
-                studentId,
-                officerName,
-                "Next Step: " + nextStep,
-                "Your placement officer has set the following next step for your application at " +
-                (selectedApp !== null ? selectedApp.companyName : "your company") + ":\n\n" +
-                nextStep +
-                (note !== "" ? "\n\nNote: " + note : "") +
-                "\n\nPlease log in to your Student Portal for details."
-            );
-
-            // Also notify the employer — find them by matching company name
-            if (selectedApp !== null) {
-                var allUsers = JSON.parse(localStorage.getItem("users")) || [];
-
-                for (var j = 0; j < allUsers.length; j++) {
-                    if (allUsers[j].role === "employer") {
-                        var empCompany = allUsers[j].company || (allUsers[j].firstName + " " + allUsers[j].lastName);
-
-                        if (selectedApp.companyName !== "" &&
-                            empCompany.toLowerCase() === selectedApp.companyName.toLowerCase()) {
-
-                            sendNotification(
-                                allUsers[j].id,
-                                officerName,
-                                "Student Update: " + selectedApp.userName,
-                                "The placement officer has set a next step for " + selectedApp.userName +
-                                " regarding their application for " + selectedApp.internshipTitle + ":\n\n" +
-                                nextStep +
-                                (note !== "" ? "\n\nNote: " + note : "")
-                            );
-                        }
-                    }
-                }
-            }
-
-            // Also save it as a progress entry so it appears in the table
-            var studentName = selectedApp !== null ? selectedApp.userName : "Student";
-            var internship  = selectedApp !== null ? selectedApp.internshipTitle + " @ " + selectedApp.companyName : "Application";
-            saveProgressEntry(studentName, internship, nextStep, note);
-
-            // Show success message
-            msgBox.style.color = "green";
-            msgBox.textContent = "";
-            showToast("Next step sent to student and employer!");
-
-            // Reset dropdowns
-            document.getElementById("officerNote").value    = "";
-            document.getElementById("nextStepSelect").value = "";
-
-            showProgressTable();
-            loadStats();
-
-            // Clear message after 3 seconds
-            setTimeout(function() {
-                msgBox.textContent = "";
-            }, 3000);
-        }
-
-
-        // ── Show progress table ──
-        function showProgressTable() {
-            var entries = getAllProgressEntries();
-            var tbody   = document.getElementById("progressTableBody");
-
-            if (entries.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px;">No entries yet.</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = "";
-
-            // Show newest entry first
-            for (var i = entries.length - 1; i >= 0; i--) {
-                var e = entries[i];
-                tbody.innerHTML +=
-                    '<tr>' +
-                        '<td><strong>' + e.studentName + '</strong></td>' +
-                        '<td>' + e.internship + '</td>' +
-                        '<td>' + e.stage + '</td>' +
-                        '<td style="color:#666;">' + (e.notes || "—") + '</td>' +
-                        '<td style="color:#aaa;">' + e.date + '</td>' +
-                    '</tr>';
-            }
-        }
-
-        showProgressTable();
-
-
-        // ── Auto Next Steps ──
-        function showNextSteps() {
-            var allUsers = JSON.parse(localStorage.getItem("users")) || [];
-            var students = [];
-            for (var i = 0; i < allUsers.length; i++) {
-                if (allUsers[i].role === "student") students.push(allUsers[i]);
-            }
-
-            var apps    = getAllApplications();
-            var logs    = getAllWeeklyLogs();
-            var entries = getAllProgressEntries();
-            var box     = document.getElementById("autoStepsList");
-            box.innerHTML = "";
-
-            // Check for pending applications
-            var pendingCount = 0;
-            for (var j = 0; j < apps.length; j++) {
-                if (apps[j].status === "Pending") pendingCount++;
-            }
-            if (pendingCount > 0) {
-                box.innerHTML += buildStepCard("high", "📋", pendingCount + " pending application(s) need review", "Students are waiting for a response from employers.");
-            }
-
-            // Check for students with no log
-            var studentsWithLogs = [];
-            for (var k = 0; k < logs.length; k++) {
-                studentsWithLogs.push(String(logs[k].userId));
-            }
-            var noLogCount = 0;
-            for (var m = 0; m < students.length; m++) {
-                var found = false;
-                for (var n = 0; n < studentsWithLogs.length; n++) {
-                    if (studentsWithLogs[n] === String(students[m].id)) found = true;
-                }
-                if (!found) noLogCount++;
-            }
-            if (noLogCount > 0) {
-                box.innerHTML += buildStepCard("medium", "📝", noLogCount + " student(s) have not submitted a log", "Follow up and remind them to submit their weekly log.");
-            }
-
-            // Check for students not in progress tracker
-            var trackedNames = [];
-            for (var p = 0; p < entries.length; p++) {
-                trackedNames.push(entries[p].studentName);
-            }
-            var notTracked = 0;
-            for (var q = 0; q < students.length; q++) {
-                var fullName = students[q].firstName + " " + students[q].lastName;
-                var tracked = false;
-                for (var r = 0; r < trackedNames.length; r++) {
-                    if (trackedNames[r] === fullName) tracked = true;
-                }
-                if (!tracked) notTracked++;
-            }
-            if (notTracked > 0) {
-                box.innerHTML += buildStepCard("medium", "📊", notTracked + " student(s) not tracked yet", "Use the Track Progress tab to log their current stage.");
-            }
-
-            // Always-present reminders
-            box.innerHTML += buildStepCard("low", "📤", "Export monthly placement report", "Generate and share the summary with your department.");
-
-            if (box.innerHTML === "") {
-                box.innerHTML = '<p style="color:#aaa;">All caught up!</p>';
-            }
-        }
-
-        // Helper: build one step card as HTML
-        function buildStepCard(priority, icon, title, description) {
-            return '<div class="step-card ' + priority + '">' +
-                       '<div style="font-size:22px;">' + icon + '</div>' +
-                       '<div>' +
-                           '<div style="font-weight:bold;font-size:14px;">' + title + '</div>' +
-                           '<div style="font-size:12px;color:#777;margin-top:2px;">' + description + '</div>' +
-                       '</div>' +
-                   '</div>';
-        }
-
-
-        // ── Custom steps ──
-        var customSteps = JSON.parse(localStorage.getItem("customSteps")) || [];
-
-        function addCustomStep() {
-            var text     = document.getElementById("customStepInput").value.trim();
-            var priority = document.getElementById("customStepPriority").value;
-
-            if (text === "") {
-                alert("Please enter a step description.");
-            return;
-                return;
-            }
-
-            customSteps.push({ icon: "📌", text: text, priority: priority });
-            localStorage.setItem("customSteps", JSON.stringify(customSteps));
-            document.getElementById("customStepInput").value = "";
-
-            showCustomSteps();
-        }
-
-        function removeCustomStep(index) {
-            var newList = [];
-            for (var i = 0; i < customSteps.length; i++) {
-                if (i !== index) newList.push(customSteps[i]);
-            }
-            customSteps = newList;
-            localStorage.setItem("customSteps", JSON.stringify(customSteps));
-            showCustomSteps();
-        }
-
-        function showCustomSteps() {
-            var box = document.getElementById("customStepsList");
-            box.innerHTML = "";
-
-            for (var i = 0; i < customSteps.length; i++) {
-                var s    = customSteps[i];
-                var icon = "🟢";
-                if (s.priority === "high")   icon = "🔴";
-                if (s.priority === "medium") icon = "🟡";
-
-                box.innerHTML +=
-                    '<div class="step-card ' + s.priority + '">' +
-                        '<div style="font-size:22px;">' + icon + '</div>' +
-                        '<div style="flex:1;">' +
-                            '<div style="font-weight:bold;font-size:14px;">' + s.text + '</div>' +
-                        '</div>' +
-                        '<button onclick="removeCustomStep(' + i + ')" ' +
-                            'style="padding:4px 10px;background:#e8ecff;color:#4f6ef7;border:none;border-radius:6px;cursor:pointer;font-size:12px;">' +
-                            '✓ Done' +
-                        '</button>' +
-                    '</div>';
-            }
-        }
-
-        showCustomSteps();
-
-
-        // ── All application statuses ──
-        function showAllStatus() {
-            var apps = getAllApplications();
-            var box  = document.getElementById("allStatusList");
-
-            if (apps.length === 0) {
-                box.innerHTML = '<p style="color:#888;">No applications yet.</p>';
-                return;
-            }
-
-            box.innerHTML = "";
-
-            // Show newest first
-            for (var i = apps.length - 1; i >= 0; i--) {
-                var app = apps[i];
-
-                var badgeClass = "badge-pending";
-                if (app.status === "Interview Scheduled") badgeClass = "badge-interview";
-                if (app.status === "Hired")               badgeClass = "badge-hired";
-                if (app.status === "Rejected")            badgeClass = "badge-rejected";
-                if (app.status !== "Pending" &&
-                    app.status !== "Interview Scheduled" &&
-                    app.status !== "Hired" &&
-                    app.status !== "Rejected") {
-                    badgeClass = "badge-other";
-                }
-
-                var ivHtml   = "";
-                var respHtml = "";
-                var offHtml  = "";
-
-                if (app.interviewDate !== "" && app.interviewDate !== undefined) {
-                    ivHtml = '<div class="info-box box-blue">📅 Interview: ' + app.interviewDate + '</div>';
-                }
-
-                if (app.studentResponse !== "" && app.studentResponse !== undefined) {
-                    var rc = app.studentResponse.indexOf("Accepted") !== -1 ? "box-green" : "box-red";
-                    respHtml = '<div class="info-box ' + rc + '">👤 Student: ' + app.studentResponse + '</div>';
-                }
-
-                if (app.officerNextStep !== "" && app.officerNextStep !== undefined) {
-                    offHtml = '<div class="info-box box-purple">📋 Next: ' + app.officerNextStep + '</div>';
-                }
-
-                box.innerHTML +=
-                    '<div class="card" style="margin-bottom:10px;">' +
-                        '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
-                            '<div>' +
-                                '<p style="font-weight:bold;margin:0 0 2px;">' + app.userName + '</p>' +
-                                '<p style="font-size:13px;color:#555;margin:2px 0;">' + app.internshipTitle + ' @ ' + (app.companyName || "—") + '</p>' +
-                                '<p style="font-size:12px;color:#aaa;margin:2px 0;">Applied: ' + app.date + '</p>' +
-                            '</div>' +
-                            '<span class="badge ' + badgeClass + '">' + app.status + '</span>' +
-                        '</div>' +
-                        ivHtml + respHtml + offHtml +
-                    '</div>';
-            }
-        }
-
-
-        // ── All weekly logs ──
-        function showAllLogs() {
-            var logs = getAllWeeklyLogs();
-            var box  = document.getElementById("allLogsList");
-
-            if (logs.length === 0) {
-                box.innerHTML = '<p style="color:#888;">No logs yet.</p>';
-                return;
-            }
-
-            box.innerHTML = "";
-
-            // Show newest first
-            for (var i = logs.length - 1; i >= 0; i--) {
-                var log = logs[i];
-
-                box.innerHTML +=
-                    '<div class="log-card">' +
-                        '<h4 style="margin:0 0 6px;color:#4f6ef7;">' + log.userName + ' — Week ' + log.weekNumber + ' @ ' + log.companyName + '</h4>' +
-                        '<p style="font-size:13px;color:#555;"><strong>Hours:</strong> ' + log.hoursWorked + '</p>' +
-                        '<p style="font-size:13px;color:#555;"><strong>Tasks:</strong> ' + log.tasks + '</p>' +
-                        (log.challenges !== "" ? '<p style="font-size:13px;color:#555;"><strong>Challenges:</strong> ' + log.challenges + '</p>' : '') +
-                        '<p style="font-size:13px;color:#555;"><strong>Reflection:</strong> ' + log.reflection + '</p>' +
-                        '<p style="font-size:11px;color:#aaa;margin-top:4px;">' + log.date + '</p>' +
-                    '</div>';
-            }
-        }
-
-
-
-
-        // ── STUDENT ELIGIBILITY ──
-        // Shows all students with their WAM and flags any issues
-        function showEligibility() {
-            var allUsers = JSON.parse(localStorage.getItem("users")) || [];
-            var box      = document.getElementById("eligibilityList");
-            var students = [];
-
-            for (var i = 0; i < allUsers.length; i++) {
-                if (allUsers[i].role === "student") {
-                    students.push(allUsers[i]);
-                }
-            }
-
-            if (students.length === 0) {
-                box.innerHTML = '<p style="color:#888;">No students registered yet.</p>';
-                return;
-            }
-
-            box.innerHTML = "";
-
-            for (var j = 0; j < students.length; j++) {
-                var s = students[j];
-
-                // Check WAM eligibility — minimum 50 to be eligible
-                var wamNum     = parseFloat(s.wam);
-                var wamOk      = !isNaN(wamNum) && wamNum >= 50;
-                var wamBadge   = "";
-                var wamText    = s.wam || "Not provided";
-
-                if (s.wam === "" || s.wam === undefined) {
-                    wamBadge = '<span style="background:#fee2e2;color:#b91c1c;padding:3px 9px;border-radius:10px;font-size:12px;font-weight:bold;">⚠️ WAM not provided</span>';
-                } else if (wamOk) {
-                    wamBadge = '<span style="background:#dcfce7;color:#15803d;padding:3px 9px;border-radius:10px;font-size:12px;font-weight:bold;">✅ WAM: ' + wamText + '</span>';
-                } else {
-                    wamBadge = '<span style="background:#fee2e2;color:#b91c1c;padding:3px 9px;border-radius:10px;font-size:12px;font-weight:bold;">❌ WAM: ' + wamText + ' (below 50)</span>';
-                }
-
-                // Visa/work rights — we just show a flag for the officer to check manually
-                // In a real system this would link to a verified document
-                var visaBadge = '<span style="background:#fef9c3;color:#a16207;padding:3px 9px;border-radius:10px;font-size:12px;">⚠️ Visa/Work Rights: Verify manually</span>';
-
-                // Availability
-                var availText = s.availability ? s.availability : "Not provided";
-
-                box.innerHTML +=
-                    '<div class="card" style="margin-bottom:12px;">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
-                    '<div>' +
-                    '<p style="font-weight:bold;margin:0 0 3px;">' + s.firstName + ' ' + s.lastName + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">✉️ ' + s.email + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">📚 Course: ' + (s.course || "Not provided") + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">📅 Available: ' + availText + '</p>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div style="margin-top:8px;">' +
-                    wamBadge + ' &nbsp; ' + visaBadge +
-                    '</div>' +
-                    '</div>';
-            }
-        }
-
-
-        // ── COMPLETION WORKFLOW ──
-        function loadCompletionDropdown() {
-            var apps = getAllApplications();
-            var sel  = document.getElementById("completionAppSelect");
-            sel.innerHTML = '<option value="">-- Select application --</option>';
-
-            for (var i = 0; i < apps.length; i++) {
-                var app = apps[i];
-                // Only show hired applications not yet completed
-                if (app.status === "Hired") {
-                    sel.innerHTML += '<option value="' + app.id + '">' + app.userName + ' — ' + app.internshipTitle + ' @ ' + (app.companyName || "—") + '</option>';
-                }
-            }
-        }
-
-        function markComplete() {
-            var sel    = document.getElementById("completionAppSelect");
-            var appId  = parseInt(sel.value);
-            var notes  = document.getElementById("completionNotes").value.trim();
-            var msgBox = document.getElementById("completionMsg");
-
-            if (!appId) {
-                msgBox.style.color = "red";
-                msgBox.textContent = "Please select an application.";
-                return;
-            }
-
-            // Find the application
-            var apps       = getAllApplications();
-            var targetApp  = null;
-            for (var i = 0; i < apps.length; i++) {
-                if (apps[i].id === appId) {
-                    targetApp = apps[i];
-                }
-            }
-
-            if (targetApp === null) return;
-
-            // Update status to Completed
-            updateApplicationStatus(appId, "Completed", "", "");
-
-            // Save a progress entry
-            saveProgressEntry(targetApp.userName, targetApp.internshipTitle + " @ " + targetApp.companyName, "Completed", notes);
-
-            // Notify the student
-            sendNotification(
-                targetApp.userId,
-                user.firstName + " " + user.lastName + " (Placement Officer)",
-                "Internship Marked as Complete 🎓",
-                "Your internship at " + targetApp.companyName + " has been marked as complete.
-
-Please expect evaluation forms from your employer. Well done on completing your internship!"
-            );
-
-            // Notify the employer
-            var allUsers = JSON.parse(localStorage.getItem("users")) || [];
-            for (var j = 0; j < allUsers.length; j++) {
-                if (allUsers[j].role === "employer") {
-                    var empCompany = allUsers[j].company || (allUsers[j].firstName + " " + allUsers[j].lastName);
-                    if (targetApp.companyName && empCompany.toLowerCase() === targetApp.companyName.toLowerCase()) {
-                        sendNotification(
-                            allUsers[j].id,
-                            user.firstName + " " + user.lastName + " (Placement Officer)",
-                            "Internship Completion: " + targetApp.userName,
-                            "The internship for " + targetApp.userName + " at your company has been marked as complete. Please submit a final evaluation from your employer portal."
-                        );
-                    }
-                }
-            }
-
-            msgBox.style.color = "green";
-            msgBox.textContent = "✓ Internship marked complete. Student and employer notified.";
-
-            document.getElementById("completionNotes").value = "";
-            showCompletedList();
-            loadCompletionDropdown();
-            showProgressTable();
-
-            setTimeout(function() { msgBox.textContent = ""; }, 3000);
-        }
-
-        function showCompletedList() {
-            var apps = getAllApplications();
-            var box  = document.getElementById("completedList");
-            var completed = [];
-
-            for (var i = 0; i < apps.length; i++) {
-                if (apps[i].status === "Completed") {
-                    completed.push(apps[i]);
-                }
-            }
-
-            if (completed.length === 0) {
-                box.innerHTML = '<p style="color:#888;">No completions recorded yet.</p>';
-                return;
-            }
-
-            box.innerHTML = "";
-            for (var j = completed.length - 1; j >= 0; j--) {
-                var app = completed[j];
-                box.innerHTML +=
-                    '<div class="card" style="margin-bottom:10px;border-left:4px solid #22c55e;">' +
-                    '<p style="font-weight:bold;margin:0 0 2px;">🎓 ' + app.userName + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">' + app.internshipTitle + ' @ ' + (app.companyName || "—") + '</p>' +
-                    '<p style="font-size:12px;color:#aaa;margin-top:4px;">Applied: ' + app.date + '</p>' +
-                    '</div>';
-            }
-        }
-
-        // ── Verification Queue ──
-        function showVerifications() {
-            var reqs = getAllVerificationRequests();
-            var box  = document.getElementById("verifyList");
-            if (!reqs.length) { box.innerHTML='<p style="color:#888;">No requests yet.</p>'; return; }
-            box.innerHTML = "";
-            for (var i = reqs.length - 1; i >= 0; i--) {
-                var r = reqs[i];
-                var statusStyle = r.status==="Approved" ? "background:#dcfce7;color:#15803d;" : r.status==="Rejected" ? "background:#fee2e2;color:#b91c1c;" : "background:#fef9c3;color:#a16207;";
-                var actions = "";
-                if (r.status === "Pending") {
-                    actions = '<button onclick="doVerify(' + r.id + ',' + r.employerId + ','Approved')" style="padding:6px 14px;background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:6px;cursor:pointer;font-size:12px;margin-right:6px;">✅ Approve</button>' +
-                              '<button onclick="doVerify(' + r.id + ',' + r.employerId + ','Rejected')" style="padding:6px 14px;background:#fee2e2;color:#b91c1c;border:1.5px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:12px;">✗ Reject</button>';
-                }
-                box.innerHTML +=
-                    '<div class="card" style="margin-bottom:10px;">' +
-                    '<p style="font-weight:bold;margin:0 0 2px;">' + r.employerName + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">🏢 ' + r.companyName + ' | Industry: ' + (r.industry||"—") + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">🌐 ' + (r.website||"—") + ' | ABN: ' + (r.abn||"—") + '</p>' +
-                    '<p style="font-size:12px;color:#aaa;margin:4px 0;">Submitted: ' + r.date + '</p>' +
-                    '<span style="padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;' + statusStyle + '">' + r.status + '</span>' +
-                    (actions ? '<div style="margin-top:8px;">' + actions + '</div>' : '') +
-                    '</div>';
-            }
-        }
-
-        function doVerify(reqId, employerId, status) {
-            updateVerificationStatus(reqId, status, employerId);
-            if (status === "Approved") {
-                sendNotification(employerId, user.firstName+" "+user.lastName+" (Placement Officer)",
-                    "Company Verification Approved",
-                    "Your company has been verified. You can now post internship listings on IIPMS."
-                );
-            } else {
-                sendNotification(employerId, user.firstName+" "+user.lastName+" (Placement Officer)",
-                    "Company Verification Rejected",
-                    "Your verification request was not approved. Please contact the placement office for more information."
-                );
-            }
-            showVerifications();
-        }
-
-
-        // ── Offer Approvals ──
-        function showOfferApprovals() {
-            var offers = getAllOffers();
-            var box    = document.getElementById("offerApprovalList");
-            if (!offers.length) { box.innerHTML='<p style="color:#888;">No offers yet.</p>'; return; }
-            box.innerHTML = "";
-            for (var i = offers.length - 1; i >= 0; i--) {
-                var o = offers[i];
-                var statusStyle = o.officerApproved ? "background:#dcfce7;color:#15803d;" : "background:#fef9c3;color:#a16207;";
-                var actions = "";
-                if (!o.officerApproved && o.status !== "Declined") {
-                    actions = '<button onclick="approveOffer(' + o.id + ',' + o.studentId + ','' + o.internshipTitle + '')" style="padding:6px 14px;background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:6px;cursor:pointer;font-size:12px;margin-right:6px;">✅ Approve Offer</button>' +
-                              '<button onclick="rejectOffer(' + o.id + ',' + o.studentId + ')" style="padding:6px 14px;background:#fee2e2;color:#b91c1c;border:1.5px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:12px;">✗ Reject Offer</button>';
-                }
-                box.innerHTML +=
-                    '<div class="card" style="margin-bottom:10px;">' +
-                    '<p style="font-weight:bold;margin:0 0 2px;">' + o.studentName + ' — ' + o.internshipTitle + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">From: ' + o.employerName + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">📅 ' + o.startDate + ' to ' + o.endDate + (o.stipend ? ' | 💰 ' + o.stipend : '') + '</p>' +
-                    '<p style="font-size:12px;color:#aaa;margin:4px 0;">Issued: ' + o.date + '</p>' +
-                    '<span style="padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;' + statusStyle + '">' + o.status + (o.officerApproved ? ' ✓' : '') + '</span>' +
-                    (actions ? '<div style="margin-top:8px;">' + actions + '</div>' : '') +
-                    '</div>';
-            }
-        }
-
-        function approveOffer(offerId, studentId, jobTitle) {
-            updateOfferStatus(offerId, "Awaiting Student Acceptance", true);
-            sendNotification(studentId, user.firstName+" "+user.lastName+" (Placement Officer)",
-                "Internship Offer Approved — Action Required",
-                "Your internship offer for " + jobTitle + " has been approved by the placement officer.
-
-Please log in to your Student Portal to accept or decline this offer."
-            );
-            showOfferApprovals();
-            alert("Offer approved and student notified.");
-        }
-
-        function rejectOffer(offerId, studentId) {
-            updateOfferStatus(offerId, "Rejected by Officer", false);
-            sendNotification(studentId, user.firstName+" "+user.lastName+" (Placement Officer)",
-                "Internship Offer Not Approved",
-                "The internship offer issued to you has not been approved by the placement office. Please contact us for more information."
-            );
-            showOfferApprovals();
-        }
-
-
-        // ── Supervisor Assignment ──
-        function loadAssignmentDropdowns() {
-            var allUsers = JSON.parse(localStorage.getItem("users")) || [];
-            var stuSel   = document.getElementById("assignStudentSel");
-            var supSel   = document.getElementById("assignSupervisorSel");
-
-            stuSel.innerHTML = '<option value="">-- Select student --</option>';
-            supSel.innerHTML = '<option value="">-- Select supervisor --</option>';
-
-            for (var i = 0; i < allUsers.length; i++) {
-                if (allUsers[i].role === "student") {
-                    stuSel.innerHTML += '<option value="' + allUsers[i].id + '">' + allUsers[i].firstName + ' ' + allUsers[i].lastName + ' (' + allUsers[i].email + ')</option>';
-                }
-                if (allUsers[i].role === "supervisor") {
-                    supSel.innerHTML += '<option value="' + allUsers[i].id + '">' + allUsers[i].firstName + ' ' + allUsers[i].lastName + ' — ' + (allUsers[i].university||"") + '</option>';
-                }
-            }
-        }
-
-        function doAssign() {
-            var stuSel  = document.getElementById("assignStudentSel");
-            var supSel  = document.getElementById("assignSupervisorSel");
-            var msgBox  = document.getElementById("assignMsg");
-            var stuId   = stuSel.value;
-            var supId   = supSel.value;
-            var stuName = stuSel.options[stuSel.selectedIndex] ? stuSel.options[stuSel.selectedIndex].text : "";
-            var supName = supSel.options[supSel.selectedIndex] ? supSel.options[supSel.selectedIndex].text : "";
-
-            if (!stuId) { msgBox.style.color="red"; msgBox.textContent="Please select a student."; return; }
-            if (!supId) { msgBox.style.color="red"; msgBox.textContent="Please select a supervisor."; return; }
-
-            assignStudentToSupervisor(supId, supName, stuId, stuName);
-
-            sendNotification(supId, user.firstName+" "+user.lastName+" (Placement Officer)",
-                "Student Assigned: " + stuName,
-                stuName + " has been assigned to you as their academic supervisor. Log in to your Supervisor Portal to monitor their progress."
-            );
-            sendNotification(stuId, user.firstName+" "+user.lastName+" (Placement Officer)",
-                "Academic Supervisor Assigned",
-                "You have been assigned an academic supervisor: " + supName + ". They will monitor your internship progress."
-            );
-
-            msgBox.style.color = "green";
-            msgBox.textContent = "✓ Assigned! Both parties have been notified.";
-            showAssignments();
-            setTimeout(function(){ msgBox.textContent=""; }, 3000);
-        }
-
-        function showAssignments() {
-            var stored = localStorage.getItem("supervisorAssignments");
-            var list   = stored !== null ? JSON.parse(stored) : [];
-            var box    = document.getElementById("assignmentsList");
-            if (!list.length) { box.innerHTML='<p style="color:#888;">No assignments yet.</p>'; return; }
-            box.innerHTML = "";
-            for (var i = list.length - 1; i >= 0; i--) {
-                var a = list[i];
-                box.innerHTML +=
-                    '<div class="card" style="margin-bottom:8px;">' +
-                    '<p style="font-size:13px;"><strong>' + a.studentName + '</strong> → ' + a.supervisorName + '</p>' +
-                    '<p style="font-size:11px;color:#aaa;">Assigned: ' + a.date + '</p>' +
-                    '</div>';
-            }
-        }
-
-
-        // ── All Evaluations ──
-        function showAllEvaluations() {
-            var evals = getAllEvaluations();
-            var box   = document.getElementById("allEvalsList");
-            if (!evals.length) { box.innerHTML='<p style="color:#888;">No evaluations yet.</p>'; return; }
-            box.innerHTML = "";
-            for (var i = evals.length - 1; i >= 0; i--) {
-                var ev = evals[i];
-                box.innerHTML +=
-                    '<div class="card" style="margin-bottom:10px;border-left:4px solid #22c55e;">' +
-                    '<p style="font-weight:bold;margin:0 0 2px;">' + ev.studentName + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">Internship: ' + ev.internshipTitle + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">Evaluated by: ' + ev.fromName + ' (' + ev.fromRole + ')</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">Overall: ' + ev.ratings.overall + '/5 | Recommendation: ' + ev.recommendation + '</p>' +
-                    '<p style="font-size:12px;color:#aaa;margin-top:4px;">' + ev.date + '</p>' +
-                    '</div>';
-            }
-        }
-
-
-
-        // ── Verifications ──
-        function showVerifications() {
-            var reqs = getAllVerificationRequests();
-            var box  = document.getElementById("verifyList");
-            if (!reqs.length) { box.innerHTML = '<p style="color:#888;">No verification requests yet.</p>'; return; }
-            box.innerHTML = "";
-            for (var i = reqs.length - 1; i >= 0; i--) {
-                var r = reqs[i];
-                var statusStyle = "background:#fef9c3;color:#a16207;";
-                if (r.status === "Approved") statusStyle = "background:#dcfce7;color:#15803d;";
-                if (r.status === "Rejected") statusStyle = "background:#fee2e2;color:#b91c1c;";
-                var btns = "";
-                if (r.status === "Pending") {
-                    btns = '<button onclick="doVerify(' + r.id + ',' + r.employerId + ',\'Approved\')" style="padding:6px 14px;background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:6px;cursor:pointer;font-size:13px;margin-right:6px;">✅ Approve</button>' +
-                           '<button onclick="doVerify(' + r.id + ',' + r.employerId + ',\'Rejected\')" style="padding:6px 14px;background:#fee2e2;color:#b91c1c;border:1.5px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:13px;">✗ Reject</button>';
-                }
-                box.innerHTML += '<div class="card" style="margin-bottom:12px;">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
-                    '<div><p style="font-weight:bold;margin:0 0 3px;">' + r.companyName + '</p>' +
-                    '<p style="font-size:13px;color:#555;">Contact: ' + r.employerName + '</p>' +
-                    '<p style="font-size:13px;color:#555;">Industry: ' + (r.industry || "—") + ' | ABN: ' + (r.abn || "—") + '</p>' +
-                    (r.website ? '<p style="font-size:13px;color:#555;">Website: ' + r.website + '</p>' : '') +
-                    '<p style="font-size:11px;color:#aaa;margin-top:4px;">Submitted: ' + r.date + '</p></div>' +
-                    '<span style="padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;' + statusStyle + '">' + r.status + '</span>' +
-                    '</div>' + (btns ? '<div style="margin-top:10px;">' + btns + '</div>' : '') + '</div>';
-            }
-        }
-
-        function doVerify(reqId, empId, status) {
-            updateVerificationStatus(reqId, status, empId);
-            showVerifications();
-            showToast("Verification " + status + "!");
-        }
-
-
-        // ── Offer Approvals ──
-        function showOfferApprovals() {
-            var offers = getAllOffers();
-            var box    = document.getElementById("offerApprovalList");
-            if (!offers.length) { box.innerHTML = '<p style="color:#888;">No offers yet.</p>'; return; }
-            box.innerHTML = "";
-            for (var i = offers.length - 1; i >= 0; i--) {
-                var o = offers[i];
-                var statusStyle = "background:#fef9c3;color:#a16207;";
-                if (o.officerApproved) statusStyle = "background:#dcfce7;color:#15803d;";
-                if (o.status === "Rejected by Officer") statusStyle = "background:#fee2e2;color:#b91c1c;";
-                var btns = "";
-                if (!o.officerApproved && o.status !== "Rejected by Officer") {
-                    btns = '<button onclick="doApproveOffer(' + o.id + ',' + o.studentId + ')" style="padding:6px 14px;background:#dcfce7;color:#15803d;border:1.5px solid #86efac;border-radius:6px;cursor:pointer;font-size:13px;margin-right:6px;">✅ Approve</button>' +
-                           '<button onclick="doRejectOffer(' + o.id + ',' + o.studentId + ')" style="padding:6px 14px;background:#fee2e2;color:#b91c1c;border:1.5px solid #fca5a5;border-radius:6px;cursor:pointer;font-size:13px;">✗ Reject</button>';
-                }
-                box.innerHTML += '<div class="card" style="margin-bottom:12px;">' +
-                    '<div style="display:flex;justify-content:space-between;">' +
-                    '<div><p style="font-weight:bold;margin:0 0 3px;">' + o.internshipTitle + '</p>' +
-                    '<p style="font-size:13px;color:#555;">Student: ' + o.studentName + ' | Employer: ' + o.employerName + '</p>' +
-                    '<p style="font-size:13px;color:#555;">📅 ' + o.startDate + ' → ' + o.endDate + (o.stipend ? ' | 💰 ' + o.stipend : '') + '</p>' +
-                    (o.terms ? '<p style="font-size:13px;color:#555;">Terms: ' + o.terms + '</p>' : '') +
-                    '<p style="font-size:11px;color:#aaa;margin-top:4px;">Issued: ' + o.date + '</p></div>' +
-                    '<span style="padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;' + statusStyle + '">' + (o.officerApproved ? "Approved" : o.status) + '</span>' +
-                    '</div>' + (btns ? '<div style="margin-top:10px;">' + btns + '</div>' : '') + '</div>';
-            }
-        }
-
-        function doApproveOffer(offerId, studentId) {
-            updateOfferStatus(offerId, "Awaiting Student Acceptance", true);
-            sendNotification(studentId, user.firstName + " " + user.lastName + " (Officer)",
-                "Internship Offer Approved",
-                "An internship offer for you has been approved by the placement officer. Please check your Offers tab to accept or decline.");
-            showOfferApprovals();
-            showToast("Offer approved and student notified!");
-        }
-
-        function doRejectOffer(offerId, studentId) {
-            updateOfferStatus(offerId, "Rejected by Officer", false);
-            sendNotification(studentId, user.firstName + " " + user.lastName + " (Officer)",
-                "Internship Offer Rejected",
-                "An internship offer for you was not approved by the placement officer. Please contact your placement officer for more information.");
-            showOfferApprovals();
-            showToast("Offer rejected.");
-        }
-
-
-        // ── Assign Supervisor ──
-        function loadAssignmentDropdowns() {
-            var students    = getAllStudents();
-            var supervisors = getAllSupervisors();
-
-            var sSel = document.getElementById("assignStudentSelect");
-            var supSel = document.getElementById("assignSupervisorSelect");
-
-            sSel.innerHTML   = '<option value="">-- Choose a student --</option>';
-            supSel.innerHTML = '<option value="">-- Choose a supervisor --</option>';
-
-            for (var i = 0; i < students.length; i++) {
-                sSel.innerHTML += '<option value="' + students[i].id + '">' + students[i].firstName + ' ' + students[i].lastName + ' (' + students[i].email + ')</option>';
-            }
-
-            if (supervisors.length === 0) {
-                supSel.innerHTML += '<option disabled>No supervisors registered yet</option>';
-            } else {
-                for (var j = 0; j < supervisors.length; j++) {
-                    supSel.innerHTML += '<option value="' + supervisors[j].id + '">' + supervisors[j].firstName + ' ' + supervisors[j].lastName + '</option>';
-                }
-            }
-        }
-
-        function doAssign() {
-            var stuSel = document.getElementById("assignStudentSelect");
-            var supSel = document.getElementById("assignSupervisorSelect");
-            var msgBox = document.getElementById("assignMsg");
-
-            var stuId  = stuSel.value;
-            var supId  = supSel.value;
-            if (!stuId || !supId) { msgBox.style.color="#b91c1c"; msgBox.textContent="Please select both a student and supervisor."; return; }
-
-            var stuName = stuSel.options[stuSel.selectedIndex].text.split(" (")[0];
-            var supName = supSel.options[supSel.selectedIndex].text;
-
-            assignStudentToSupervisor(supId, supName, stuId, stuName);
-
-            sendNotification(supId, user.firstName + " " + user.lastName + " (Officer)",
-                "Student Assigned: " + stuName,
-                stuName + " has been assigned to you as their academic supervisor.");
-            sendNotification(stuId, user.firstName + " " + user.lastName + " (Officer)",
-                "Academic Supervisor Assigned",
-                "You have been assigned an academic supervisor: " + supName + ". They will monitor your internship progress.");
-
-            msgBox.style.color = "#15803d";
-            msgBox.textContent = "✓ Assigned! Both parties have been notified.";
-            showAssignments();
-            setTimeout(function() { msgBox.textContent = ""; }, 3000);
-        }
-
-        function showAssignments() {
-            var stored = localStorage.getItem("supervisorAssignments");
-            var list   = stored ? JSON.parse(stored) : [];
-            var box    = document.getElementById("assignmentsList");
-            if (!list.length) { box.innerHTML = '<p style="color:#888;">No assignments yet.</p>'; return; }
-            box.innerHTML = "";
-            for (var i = list.length - 1; i >= 0; i--) {
-                var a = list[i];
-                box.innerHTML += '<div class="card" style="margin-bottom:8px;">' +
-                    '<p style="font-size:13px;margin:0;"><strong>' + a.studentName + '</strong> → Supervisor: ' + a.supervisorName + '</p>' +
-                    '<p style="font-size:11px;color:#aaa;margin-top:4px;">Assigned: ' + a.date + '</p>' + '</div>';
-            }
-        }
-
-
-        // ── All Evaluations ──
-        function showAllEvaluations() {
-            var evals = getAllEvaluations();
-            var box   = document.getElementById("allEvalsList");
-            if (!evals.length) { box.innerHTML = '<p style="color:#888;">No evaluations yet.</p>'; return; }
-            box.innerHTML = "";
-            for (var i = evals.length - 1; i >= 0; i--) {
-                var ev = evals[i];
-                box.innerHTML += '<div class="card" style="margin-bottom:10px;border-left:4px solid #22c55e;">' +
-                    '<p style="font-weight:bold;margin:0 0 2px;">' + ev.studentName + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">Internship: ' + ev.internshipTitle + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">Evaluated by: ' + ev.fromName + ' (' + ev.fromRole + ')</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">⭐ Overall: ' + ev.ratings.overall + '/5 | Recommendation: ' + ev.recommendation + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:4px 0;"><strong>Comments:</strong> ' + ev.comments + '</p>' +
-                    '<p style="font-size:11px;color:#aaa;margin-top:4px;">' + ev.date + '</p>' + '</div>';
-            }
-        }
-
-
-        // ── Eligibility ──
-        function showEligibility() {
-            var students = getAllStudents();
-            var allApps  = getAllApplications();
-            var box      = document.getElementById("eligibilityList");
-
-            if (!students.length) { box.innerHTML = '<p style="color:#888;">No students registered yet.</p>'; return; }
-            box.innerHTML = "";
-
-            for (var i = 0; i < students.length; i++) {
-                var s = students[i];
-                var appCount = 0;
-                for (var j = 0; j < allApps.length; j++) {
-                    if (allApps[j].userId == s.id) appCount++;
-                }
-
-                var eligible = s.skills && s.skills !== "";
-                var badge = eligible
-                    ? '<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;">✓ Eligible</span>'
-                    : '<span style="background:#fef9c3;color:#a16207;padding:3px 10px;border-radius:10px;font-size:12px;font-weight:bold;">⚠ Incomplete Profile</span>';
-
-                box.innerHTML += '<div class="card" style="margin-bottom:10px;">' +
-                    '<div style="display:flex;justify-content:space-between;align-items:flex-start;">' +
-                    '<div><p style="font-weight:bold;margin:0 0 3px;">' + s.firstName + ' ' + s.lastName + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">✉️ ' + s.email + '</p>' +
-                    (s.course ? '<p style="font-size:13px;color:#555;margin:2px 0;">📚 ' + s.course + (s.wam ? ' | WAM: ' + s.wam : '') + '</p>' : '') +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">🎯 Skills: ' + (s.skills || '<em style="color:#aaa;">None added</em>') + '</p>' +
-                    '<p style="font-size:12px;color:#aaa;margin-top:4px;">Applications: ' + appCount + '</p></div>' +
-                    badge + '</div></div>';
-            }
-        }
-
-
-        // ── Completion ──
-        function loadCompletionDropdown() {
-            var students = getAllStudents();
-            var sel = document.getElementById("completionStudentSelect");
-            sel.innerHTML = '<option value="">-- Choose a student --</option>';
-            for (var i = 0; i < students.length; i++) {
-                sel.innerHTML += '<option value="' + students[i].id + '">' + students[i].firstName + ' ' + students[i].lastName + '</option>';
-            }
-        }
-
-        function loadStudentJobsForCompletion() {
-            var stuId = document.getElementById("completionStudentSelect").value;
-            var jobSec = document.getElementById("completionJobSection");
-            var dateSec = document.getElementById("completionDateSection");
-            var btn = document.getElementById("completionBtn");
-
-            if (!stuId) { jobSec.style.display="none"; dateSec.style.display="none"; btn.style.display="none"; return; }
-
-            var apps = getStudentApplications(stuId);
-            var sel = document.getElementById("completionJobSelect");
-            sel.innerHTML = '<option value="">-- Select internship --</option>';
-
-            for (var i = 0; i < apps.length; i++) {
-                if (apps[i].status === "Hired" || apps[i].status === "Placed") {
-                    sel.innerHTML += '<option value="' + apps[i].internshipId + '">' + apps[i].internshipTitle + ' @ ' + (apps[i].companyName || "") + '</option>';
-                }
-            }
-
-            jobSec.style.display = "block";
-            dateSec.style.display = "block";
-            btn.style.display = "block";
-        }
-
-        function markComplete() {
-            var stuSel = document.getElementById("completionStudentSelect");
-            var jobSel = document.getElementById("completionJobSelect");
-            var dateVal = document.getElementById("completionDate").value.trim();
-            var msgBox  = document.getElementById("completionMsg");
-
-            if (!stuSel.value || !jobSel.value || !dateVal) {
-                msgBox.style.color = "#b91c1c";
-                msgBox.textContent = "Please fill all fields.";
-                return;
-            }
-
-            var completions = JSON.parse(localStorage.getItem("completions") || "[]");
-            completions.push({
-                id:           Date.now(),
-                studentId:    stuSel.value,
-                studentName:  stuSel.options[stuSel.selectedIndex].text,
-                internshipId: jobSel.value,
-                jobTitle:     jobSel.options[jobSel.selectedIndex].text,
-                completionDate: dateVal,
-                officerName:  user.firstName + " " + user.lastName,
-                date:         new Date().toLocaleDateString()
-            });
-            localStorage.setItem("completions", JSON.stringify(completions));
-
-            sendNotification(stuSel.value, user.firstName + " " + user.lastName + " (Officer)",
-                "🎓 Internship Completion Recorded",
-                "Your internship has been marked as complete as of " + dateVal + ". Congratulations! Please collect your completion certificate from the placement office.");
-
-            msgBox.style.color = "#15803d";
-            msgBox.textContent = "✓ Completion recorded! Student notified.";
-            showCompletedList();
-            setTimeout(function() { msgBox.textContent = ""; }, 3000);
-        }
-
-        function showCompletedList() {
-            var completions = JSON.parse(localStorage.getItem("completions") || "[]");
-            var box = document.getElementById("completedList");
-            if (!completions.length) { box.innerHTML = '<p style="color:#888;">No completions recorded yet.</p>'; return; }
-            box.innerHTML = "";
-            for (var i = completions.length - 1; i >= 0; i--) {
-                var c = completions[i];
-                box.innerHTML += '<div class="card" style="margin-bottom:10px;border-left:4px solid #22c55e;">' +
-                    '<p style="font-weight:bold;margin:0 0 3px;">🎓 ' + c.studentName + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">' + c.jobTitle + '</p>' +
-                    '<p style="font-size:13px;color:#555;margin:2px 0;">Completed: ' + c.completionDate + '</p>' +
-                    '<p style="font-size:11px;color:#aaa;margin-top:4px;">Recorded by ' + c.officerName + ' on ' + c.date + '</p></div>';
-            }
-        }
-
-        // ── Tab switching ──
-        function showTab(tabName, btn) {
-            var allPanels = document.getElementsByClassName("tab-panel");
-            for (var i = 0; i < allPanels.length; i++) {
-                allPanels[i].classList.remove("active");
-            }
-
-            var allBtns = document.getElementsByClassName("tab-btn");
-            for (var j = 0; j < allBtns.length; j++) {
-                allBtns[j].classList.remove("active");
-            }
-
-            document.getElementById("tab-" + tabName).classList.add("active");
-            btn.classList.add("active");
-
-            if (tabName === "nextsteps") showNextSteps();
-            if (tabName === "status")    showAllStatus();
-            if (tabName === "logs")      showAllLogs();
-            if (tabName === "verify")    showVerifications();
-            if (tabName === "offers")    showOfferApprovals();
-            if (tabName === "assign")    { loadAssignmentDropdowns(); showAssignments(); }
-            if (tabName === "evals")         showAllEvaluations();
-            if (tabName === "eligibility")   showEligibility();
-            if (tabName === "completion")    { loadCompletionDropdown(); showCompletedList(); }
-        }
-
-    </script>
-
-<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
+        <!-- TAB: OVERVIEW -->
+        <div class="tab-panel active" id="tab-overview">
+            <p class="section-title">All Applications</p>
+            {% for app in all_applications %}
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <p style="font-weight:bold;margin:0 0 2px;">{{ app.student.get_full_name }}</p>
+                        <p style="font-size:13px;color:#555;">{{ app.internship.title }} @ {{ app.internship.company }}</p>
+                        <p style="font-size:11px;color:#aaa;">{{ app.applied_at|date:"d M Y" }}</p>
+                    </div>
+                    <span class="badge" style="background:#f1f5f9;color:#555;">{{ app.status }}</span>
+                </div>
+                <!-- Officer next step -->
+                <form method="POST" action="/officer/nextstep/{{ app.id }}/" style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+                    {% csrf_token %}
+                    <input type="text" name="next_step" placeholder="Set next step..." style="flex:1;min-width:150px;">
+                    <input type="text" name="note" placeholder="Note (optional)" style="flex:1;min-width:150px;">
+                    <button type="submit" class="btn-primary">Set</button>
+                </form>
+            </div>
+            {% empty %}
+            <p style="color:#aaa;text-align:center;padding:20px;">No applications yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- TAB: VERIFICATIONS -->
+        <div class="tab-panel" id="tab-verify">
+            <p class="section-title">Employer Verification Requests</p>
+            {% for emp in verify_requests %}
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <p style="font-weight:bold;margin:0 0 3px;">{{ emp.company_name }}</p>
+                        <p style="font-size:13px;color:#555;">Contact: {{ emp.user.get_full_name }} ({{ emp.user.email }})</p>
+                        <p style="font-size:13px;color:#555;">Industry: {{ emp.industry|default:"—" }} | ABN: {{ emp.abn|default:"—" }}</p>
+                        {% if emp.website %}<p style="font-size:13px;color:#555;">🌐 {{ emp.website }}</p>{% endif %}
+                        <p style="font-size:11px;color:#aaa;">Registered: {{ emp.user.date_joined|date:"d M Y" }}</p>
+                    </div>
+                    <span class="badge" style="background:#fef9c3;color:#a16207;">Pending</span>
+                </div>
+                <div style="margin-top:10px;display:flex;gap:8px;">
+                    <form method="POST" action="/officer/verify/{{ emp.id }}/">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="Approved">
+                        <button type="submit" class="btn-approve">✅ Approve</button>
+                    </form>
+                    <form method="POST" action="/officer/verify/{{ emp.id }}/">
+                        {% csrf_token %}
+                        <input type="hidden" name="status" value="Rejected">
+                        <button type="submit" class="btn-reject">✗ Reject</button>
+                    </form>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color:#aaa;text-align:center;padding:20px;">No pending verification requests.</p>
+            {% endfor %}
+        </div>
+
+        <!-- TAB: OFFER APPROVALS -->
+        <div class="tab-panel" id="tab-offers">
+            <p class="section-title">Offers Awaiting Approval</p>
+            {% for offer in all_offers %}
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+                    <div>
+                        <p style="font-weight:bold;margin:0 0 3px;">{{ offer.internship.title }}</p>
+                        <p style="font-size:13px;color:#555;">Student: {{ offer.student.get_full_name }} | Employer: {{ offer.employer.get_full_name }}</p>
+                        <p style="font-size:13px;color:#555;">📅 {{ offer.start_date }} → {{ offer.end_date }}{% if offer.stipend %} | 💰 {{ offer.stipend }}{% endif %}</p>
+                        {% if offer.terms %}<p style="font-size:13px;color:#555;">Terms: {{ offer.terms }}</p>{% endif %}
+                        <p style="font-size:11px;color:#aaa;">Issued: {{ offer.created_at|date:"d M Y" }}</p>
+                    </div>
+                    <span class="badge" style="background:{% if offer.officer_approved %}#dcfce7;color:#15803d{% elif offer.status == 'Rejected by Officer' %}#fee2e2;color:#b91c1c{% else %}#fef9c3;color:#a16207{% endif %};">
+                        {% if offer.officer_approved %}Approved{% else %}{{ offer.status }}{% endif %}
+                    </span>
+                </div>
+                {% if not offer.officer_approved and offer.status != 'Rejected by Officer' %}
+                <div style="margin-top:10px;display:flex;gap:8px;">
+                    <form method="POST" action="/officer/offer/{{ offer.id }}/">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="approve">
+                        <button type="submit" class="btn-approve">✅ Approve</button>
+                    </form>
+                    <form method="POST" action="/officer/offer/{{ offer.id }}/">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="reject">
+                        <button type="submit" class="btn-reject">✗ Reject</button>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <p style="color:#aaa;text-align:center;padding:20px;">No offers pending approval.</p>
+            {% endfor %}
+        </div>
+
+        <!-- TAB: PROGRESS -->
+        <div class="tab-panel" id="tab-progress">
+            <p class="section-title">Log Student Progress</p>
+            <div class="card" style="background:#f8faff;">
+                <form method="POST" action="/officer/progress/add/">
+                    {% csrf_token %}
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <select name="student_id" style="flex:1;min-width:150px;" required>
+                            <option value="">Select student...</option>
+                            {% for s in all_students %}
+                            <option value="{{ s.id }}">{{ s.get_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="internship_id" style="flex:1;min-width:150px;">
+                            <option value="">Select internship (optional)...</option>
+                            {% for app in all_applications %}
+                            <option value="{{ app.internship.id }}">{{ app.student.get_full_name }} — {{ app.internship.title }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="stage" style="flex:1;min-width:120px;" required>
+                            <option value="">Stage...</option>
+                            <option value="Applied">Applied</option>
+                            <option value="Interview">Interview</option>
+                            <option value="Offer">Offer</option>
+                            <option value="Placed">Placed</option>
+                            <option value="Withdrawn">Withdrawn</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                        <input type="text" name="notes" placeholder="Notes (optional)" style="flex:2;min-width:150px;">
+                        <button type="submit" class="btn-primary">Add Entry</button>
+                    </div>
+                </form>
+            </div>
+            <p class="section-title">Progress History</p>
+            {% for entry in progress_entries %}
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <p style="font-weight:bold;margin:0 0 2px;">{{ entry.student.get_full_name }}</p>
+                        {% if entry.internship %}<p style="font-size:13px;color:#555;">{{ entry.internship.title }} @ {{ entry.internship.company }}</p>{% endif %}
+                        {% if entry.notes %}<p style="font-size:13px;color:#555;">{{ entry.notes }}</p>{% endif %}
+                        <p style="font-size:11px;color:#aaa;">{{ entry.created_at|date:"d M Y" }}</p>
+                    </div>
+                    <span class="badge" style="background:#e8ecff;color:#4f6ef7;">{{ entry.stage }}</span>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color:#aaa;text-align:center;padding:20px;">No progress entries yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- TAB: WEEKLY LOGS -->
+        <div class="tab-panel" id="tab-logs">
+            <p class="section-title">Student Weekly Logs ({{ all_logs.count }})</p>
+            {% for log in all_logs %}
+            <div class="card" style="border-left:4px solid #22c55e;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <p style="font-weight:bold;margin:0 0 2px;">{{ log.student.get_full_name }} — Week {{ log.week_number }}</p>
+                        <p style="font-size:13px;color:#555;">{{ log.company_name }} | ⏱ {{ log.hours_worked }} hours</p>
+                        <p style="font-size:13px;color:#555;margin-top:4px;"><strong>Tasks:</strong> {{ log.tasks }}</p>
+                        {% if log.challenges %}<p style="font-size:13px;color:#555;"><strong>Challenges:</strong> {{ log.challenges }}</p>{% endif %}
+                        <p style="font-size:13px;color:#555;"><strong>Reflection:</strong> {{ log.reflection }}</p>
+                    </div>
+                    <p style="font-size:11px;color:#aaa;flex-shrink:0;">{{ log.submitted_at|date:"d M Y" }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <p style="color:#aaa;text-align:center;padding:20px;">No logs submitted yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- TAB: ASSIGN SUPERVISORS -->
+        <div class="tab-panel" id="tab-assign">
+            <p class="section-title">Assign Academic Supervisors</p>
+            <div class="card" style="background:#f8faff;">
+                <form method="POST" action="/officer/assign/">
+                    {% csrf_token %}
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                        <div style="flex:1;min-width:150px;">
+                            <label style="font-size:13px;font-weight:bold;">Student</label>
+                            <select name="student_id" style="margin-top:6px;width:100%;" required>
+                                <option value="">Select student...</option>
+                                {% for s in all_students %}
+                                <option value="{{ s.id }}">{{ s.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div style="flex:1;min-width:150px;">
+                            <label style="font-size:13px;font-weight:bold;">Supervisor</label>
+                            <select name="supervisor_id" style="margin-top:6px;width:100%;" required>
+                                <option value="">Select supervisor...</option>
+                                {% for sup in supervisors %}
+                                <option value="{{ sup.id }}">{{ sup.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding:10px 20px;">✅ Assign</button>
+                    </div>
+                </form>
+            </div>
+            <p class="section-title">Current Assignments</p>
+            {% for a in assignments %}
+            <div class="card">
+                <p style="margin:0;"><strong>{{ a.student.get_full_name }}</strong> → Supervisor: {{ a.supervisor.get_full_name }}</p>
+                <p style="font-size:11px;color:#aaa;margin-top:4px;">Assigned: {{ a.assigned_at|date:"d M Y" }}</p>
+            </div>
+            {% empty %}
+            <p style="color:#aaa;text-align:center;padding:20px;">No assignments yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- TAB: EVALUATIONS -->
+        <div class="tab-panel" id="tab-evals">
+            <p class="section-title">All Evaluations ({{ all_evaluations.count }})</p>
+            {% for ev in all_evaluations %}
+            <div class="card" style="border-left:4px solid #22c55e;">
+                <p style="font-weight:bold;margin:0 0 2px;">{{ ev.student.get_full_name }}</p>
+                <p style="font-size:13px;color:#555;">{{ ev.internship.title }} | By: {{ ev.evaluator.get_full_name }} ({{ ev.from_role }})</p>
+                <p style="font-size:13px;color:#555;">⭐ Overall: {{ ev.rating_overall }}/5 | Recommendation: {{ ev.recommendation }}</p>
+                {% if ev.comments %}<p style="font-size:13px;color:#555;margin-top:4px;">{{ ev.comments }}</p>{% endif %}
+                <p style="font-size:11px;color:#aaa;margin-top:4px;">{{ ev.submitted_at|date:"d M Y" }}</p>
+            </div>
+            {% empty %}
+            <p style="color:#aaa;text-align:center;padding:20px;">No evaluations yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- TAB: ELIGIBILITY -->
+        <div class="tab-panel" id="tab-eligibility">
+            <p class="section-title">Student Eligibility ({{ all_students.count }} students)</p>
+            {% for s in all_students %}
+            {% with profile=student_profiles|get_profile:s.id %}
+            <div class="card">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                    <div>
+                        <p style="font-weight:bold;margin:0 0 2px;">{{ s.get_full_name }}</p>
+                        <p style="font-size:13px;color:#555;">✉️ {{ s.email }}</p>
+                        {% if profile %}
+                            {% if profile.course %}<p style="font-size:13px;color:#555;">📚 {{ profile.course }}{% if profile.wam %} | WAM: {{ profile.wam }}{% endif %}</p>{% endif %}
+                            <p style="font-size:13px;color:#555;">🎯 Skills: {% if profile.skills %}{{ profile.skills }}{% else %}<em style="color:#aaa;">None added</em>{% endif %}</p>
+                        {% endif %}
+                    </div>
+                    {% if profile and profile.skills %}
+                        <span class="badge" style="background:#dcfce7;color:#15803d;">✓ Eligible</span>
+                    {% else %}
+                        <span class="badge" style="background:#fef9c3;color:#a16207;">⚠ Incomplete</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endwith %}
+            {% empty %}
+            <p style="color:#aaa;text-align:center;padding:20px;">No students registered yet.</p>
+            {% endfor %}
+        </div>
+
+        <!-- TAB: COMPLETION -->
+        <div class="tab-panel" id="tab-completion">
+            <p class="section-title">Record Internship Completion</p>
+            <div class="card" style="background:#f8faff;">
+                <form method="POST" action="/officer/complete/">
+                    {% csrf_token %}
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                        <div style="flex:1;min-width:150px;">
+                            <label style="font-size:13px;font-weight:bold;">Student</label>
+                            <select name="student_id" style="margin-top:6px;width:100%;" required>
+                                <option value="">Select student...</option>
+                                {% for s in all_students %}
+                                <option value="{{ s.id }}">{{ s.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div style="flex:1;min-width:150px;">
+                            <label style="font-size:13px;font-weight:bold;">Internship</label>
+                            <select name="internship_id" style="margin-top:6px;width:100%;" required>
+                                <option value="">Select internship...</option>
+                                {% for app in all_applications %}
+                                {% if app.status == 'Hired' %}
+                                <option value="{{ app.internship.id }}">{{ app.student.get_full_name }} — {{ app.internship.title }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div style="flex:1;min-width:150px;">
+                            <label style="font-size:13px;font-weight:bold;">Completion Date</label>
+                            <input type="text" name="completion_date" placeholder="e.g. 30 September 2026" style="margin-top:6px;width:100%;" required>
+                        </div>
+                        <button type="submit" class="btn-primary" style="padding:10px 20px;">🎓 Mark Complete</button>
+                    </div>
+                </form>
+            </div>
+            <p class="section-title">Completed Internships</p>
+            {% for c in completions %}
+            <div class="card" style="border-left:4px solid #22c55e;">
+                <p style="font-weight:bold;margin:0 0 2px;">🎓 {{ c.student.get_full_name }}</p>
+                <p style="font-size:13px;color:#555;">{{ c.internship.title }} @ {{ c.internship.company }}</p>
+                <p style="font-size:13px;color:#555;">Completed: {{ c.completion_date }}</p>
+                <p style="font-size:11px;color:#aaa;margin-top:4px;">Recorded by {{ c.recorded_by.get_full_name }} on {{ c.recorded_at|date:"d M Y" }}</p>
+            </div>
+            {% empty %}
+            <p style="color:#aaa;text-align:center;padding:20px;">No completions recorded yet.</p>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+
+<form id="logout-form" method="POST" action="/logout/">{% csrf_token %}</form>
+<footer><p>© 2026 IIPMS | Officer Dashboard</p></footer>
+
+<script>
+function showTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+}
+</script>
 </body>
 </html>

@@ -6,29 +6,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weekly Log - IIPMS</title>
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        input,textarea,select{width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;outline:none;font-family:Arial,sans-serif;box-sizing:border-box;}
+        textarea{resize:vertical;}
+        input:focus,textarea:focus{border-color:#4f6ef7;box-shadow:0 0 0 3px rgba(79,110,247,0.15);}
+        .success-box{background:#dcfce7;border:1.5px solid #22c55e;color:#15803d;padding:10px 14px;border-radius:8px;font-size:14px;margin-bottom:16px;}
+        .log-card{background:white;padding:16px;border-radius:10px;margin-bottom:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08);border-left:4px solid #4f6ef7;}
+    </style>
 </head>
 <body>
-    <!-- Django flash messages (success/error banners) -->
-    {% if messages %}
-    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
-        {% for message in messages %}
-        <div style="background:{% if message.tags == 'success' %}#dcfce7{% elif message.tags == 'danger' %}#fee2e2{% else %}#fef9c3{% endif %};
-                    border-radius:8px;padding:12px 16px;margin-bottom:8px;
-                    color:{% if message.tags == 'success' %}#15803d{% elif message.tags == 'danger' %}#b91c1c{% else %}#a16207{% endif %};
-                    font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
-            {{ message }}
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
 <header class="navbar">
     <div class="logo">IIPMS</div>
     <nav><ul>
-        <li><a href="{% url 'student_dashboard' %}">Dashboard</a></li>
-        <li><a href="{% url 'internship_list' %}">Internships</a></li>
-        <li><a href="{% url 'matches' %}">Matches</a></li>
-        <li><a href="{% url 'weekly_log' %}">Logs</a></li>
+        <li><a href="/student/">Dashboard</a></li>
+        <li><a href="/student/internships/">Internships</a></li>
+        <li><a href="/student/matches/">Matches</a></li>
+        <li><a href="/student/log/">Logs</a></li>
         <li><a href="/logout/" class="btn">Logout</a></li>
     </ul></nav>
 </header>
@@ -40,92 +33,74 @@
 
 <section class="apply-section">
     <div class="apply-container">
-        <form id="weeklyLogForm">
-            <div class="input-group">
-                <label>Week Number</label>
-                <input type="number" id="weekNumber" placeholder="e.g. 1" min="1" required>
-            </div>
+
+        {% for message in messages %}
+        <div class="success-box">{{ message }}</div>
+        {% endfor %}
+
+        <form method="POST">
+            {% csrf_token %}
+
             <div class="input-group">
                 <label>Company / Employer</label>
-                <input type="text" id="companyName" placeholder="e.g. TechCorp" required>
+                <input type="text" name="company_name" value="{{ form.company_name.value|default:'' }}" placeholder="e.g. TechCorp" required style="margin-top:6px;">
             </div>
-            <div class="input-group">
-                <label>Hours Worked This Week</label>
-                <input type="number" id="hoursWorked" placeholder="e.g. 40" min="1" max="80" required>
+
+            <div class="input-group" style="margin-top:15px;">
+                <label>Week Number</label>
+                <input type="number" name="week_number" min="1" placeholder="e.g. 1" required style="margin-top:6px;">
             </div>
-            <div class="input-group">
-                <label>Tasks Completed</label>
-                <textarea id="tasks" rows="4" placeholder="Describe what you worked on this week..." required></textarea>
+
+            <div class="input-group" style="margin-top:15px;">
+                <label>Hours Worked</label>
+                <input type="number" name="hours_worked" min="0" placeholder="e.g. 38" required style="margin-top:6px;">
             </div>
-            <div class="input-group">
-                <label>Challenges Faced</label>
-                <textarea id="challenges" rows="3" placeholder="Any difficulties or blockers? (optional)"></textarea>
+
+            <div class="input-group" style="margin-top:15px;">
+                <label>Tasks Completed *</label>
+                <textarea name="tasks" rows="4" placeholder="Describe what you worked on this week..." required style="margin-top:6px;"></textarea>
             </div>
-            <div class="input-group">
-                <label>Weekly Reflection</label>
-                <textarea id="reflection" rows="4" placeholder="What did you learn? What went well?" required></textarea>
+
+            <div class="input-group" style="margin-top:15px;">
+                <label>Challenges Faced (optional)</label>
+                <textarea name="challenges" rows="3" placeholder="Any blockers or difficulties?" style="margin-top:6px;"></textarea>
             </div>
-            <button type="submit" class="apply-btn">Submit Weekly Log</button>
+
+            <div class="input-group" style="margin-top:15px;">
+                <label>Reflection *</label>
+                <textarea name="reflection" rows="4" placeholder="What did you learn this week?" required style="margin-top:6px;"></textarea>
+            </div>
+
+            <button type="submit" class="apply-btn" style="margin-top:20px;width:100%;padding:12px;background:#4f6ef7;color:white;border:none;border-radius:6px;font-size:16px;cursor:pointer;">
+                📤 Submit Weekly Log
+            </button>
         </form>
     </div>
 </section>
 
 <section class="log-history">
     <div class="apply-container">
-        <h2>My Submitted Logs</h2>
-        <div id="logList"></div>
+        <h2 style="margin-bottom:16px;">Your Submitted Logs ({{ logs|length }})</h2>
+        {% for log in logs %}
+        <div class="log-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <div>
+                    <p style="font-weight:bold;font-size:15px;margin:0 0 3px;">Week {{ log.week_number }} — {{ log.company_name }}</p>
+                    <p style="font-size:11px;color:#aaa;margin:0 0 8px;">Submitted: {{ log.submitted_at|date:"d M Y" }}</p>
+                </div>
+                <span style="background:#e8ecff;color:#4f6ef7;padding:3px 10px;border-radius:10px;font-size:12px;">⏱ {{ log.hours_worked }} hrs</span>
+            </div>
+            <p style="font-size:13px;color:#555;margin:4px 0;"><strong>Tasks:</strong> {{ log.tasks }}</p>
+            {% if log.challenges %}<p style="font-size:13px;color:#555;margin:4px 0;"><strong>Challenges:</strong> {{ log.challenges }}</p>{% endif %}
+            <p style="font-size:13px;color:#555;margin:4px 0;"><strong>Reflection:</strong> {{ log.reflection }}</p>
+        </div>
+        {% empty %}
+        <p style="color:#aaa;text-align:center;padding:20px;">No logs submitted yet.</p>
+        {% endfor %}
     </div>
 </section>
 
+<form id="logout-form" method="POST" action="/logout/">{% csrf_token %}</form>
 <footer><p>© 2026 IIPMS | Weekly Log</p></footer>
-
-<script src="{% static 'js/auth.js' %}"></script>
-<script src="{% static 'js/data.js' %}"></script>
-<script>
-    
-    if (!user) ;
-
-    function displayLogs() {
-        var logs = getStudentLogs(user.id);
-        var box  = document.getElementById("logList");
-        if (!logs.length) {
-            box.innerHTML = '<p style="color:#aaa;">No logs submitted yet.</p>';
-            return;
-        }
-        box.innerHTML = "";
-        for (var i = logs.length - 1; i >= 0; i--) {
-            var log = logs[i];
-            box.innerHTML +=
-                '<div class="card" style="margin-bottom:14px;border-left:4px solid #4f6ef7;">' +
-                '<p style="font-weight:bold;color:#4f6ef7;margin:0 0 6px;">Week ' + log.weekNumber + ' — ' + (log.companyName || "") + '</p>' +
-                '<p style="font-size:13px;color:#555;"><strong>Hours:</strong> ' + log.hoursWorked + '</p>' +
-                '<p style="font-size:13px;color:#555;"><strong>Tasks:</strong> ' + log.tasks + '</p>' +
-                (log.challenges ? '<p style="font-size:13px;color:#555;"><strong>Challenges:</strong> ' + log.challenges + '</p>' : '') +
-                '<p style="font-size:13px;color:#555;"><strong>Reflection:</strong> ' + log.reflection + '</p>' +
-                '<p style="font-size:11px;color:#aaa;margin-top:6px;">Submitted: ' + log.date + '</p>' +
-                '</div>';
-        }
-    }
-
-    document.getElementById("weeklyLogForm").addEventListener("submit", function(e) {
-        e.preventDefault();
-        saveWeeklyLog(
-            user.id,
-            user.firstName + " " + user.lastName,
-            document.getElementById("companyName").value.trim(),
-            parseInt(document.getElementById("weekNumber").value),
-            parseInt(document.getElementById("hoursWorked").value),
-            document.getElementById("tasks").value.trim(),
-            document.getElementById("challenges").value.trim(),
-            document.getElementById("reflection").value.trim()
-        );
-        alert("Weekly log submitted successfully!");
-        this.reset();
-        displayLogs();
-    });
-
-    displayLogs();
-</script>
-<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
 </body>
 </html>
