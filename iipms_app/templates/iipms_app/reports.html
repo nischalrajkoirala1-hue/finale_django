@@ -1,0 +1,585 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - IIPMS</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        .reports-wrap { max-width: 1000px; margin: 0 auto; padding: 30px; }
+
+        /* Summary tiles */
+        .stat-grid { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
+        .stat-tile {
+            flex: 1; min-width: 130px;
+            background-color: white;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .stat-tile h2 { font-size: 32px; margin: 0 0 4px; color: #4f6ef7; }
+        .stat-tile p  { font-size: 13px; color: #888; margin: 0; }
+
+        /* Section heading */
+        .section-title {
+            font-size: 16px; font-weight: bold; color: #333;
+            margin: 28px 0 12px;
+            padding-bottom: 6px;
+            border-bottom: 2px solid #e8ecff;
+        }
+
+        /* Data tables */
+        table.rep {
+            width: 100%; border-collapse: collapse;
+            font-size: 13px; background-color: white;
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            margin-bottom: 10px;
+        }
+        table.rep th { background-color: #4f6ef7; color: white; padding: 10px 14px; text-align: left; }
+        table.rep td { padding: 9px 14px; border-bottom: 1px solid #f0f2ff; color: #444; }
+        table.rep tr:last-child td { border: none; }
+        table.rep tr:hover td { background-color: #fafbff; }
+
+        /* Status badges */
+        .badge-sm { display:inline-block;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:bold; }
+        .b-pending  { background:#fef9c3;color:#a16207; }
+        .b-iv       { background:#dbeafe;color:#1d4ed8; }
+        .b-hired    { background:#dcfce7;color:#15803d; }
+        .b-rejected { background:#fee2e2;color:#b91c1c; }
+        .b-complete { background:#e0e7ff;color:#3730a3; }
+        .b-other    { background:#ede9fe;color:#6d28d9; }
+
+        .no-data { color:#aaa;font-style:italic;padding:16px;text-align:center; }
+
+        /* Export button */
+        .export-btn {
+            padding: 9px 20px;
+            background-color: #4f6ef7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-right: 8px;
+            margin-bottom: 10px;
+        }
+
+        .export-btn:hover { background-color: #3a5ae0; }
+    </style>
+</head>
+<body>
+    <!-- Django flash messages (success/error banners) -->
+    {% if messages %}
+    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
+        {% for message in messages %}
+        <div style="background:{% if message.tags == 'success' %}#dcfce7{% elif message.tags == 'danger' %}#fee2e2{% else %}#fef9c3{% endif %};
+                    border-radius:8px;padding:12px 16px;margin-bottom:8px;
+                    color:{% if message.tags == 'success' %}#15803d{% elif message.tags == 'danger' %}#b91c1c{% else %}#a16207{% endif %};
+                    font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+    <header class="navbar">
+        <div class="logo">IIPMS</div>
+        <nav>
+            <ul>
+                <li><a href="{% url 'officer_dashboard' %}">Dashboard</a></li>
+                <li><a href="{% url 'reports' %}">Reports</a></li>
+                <li><a href="/logout/" class="btn">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="page-title">
+        <h1>Reports &amp; Analytics</h1>
+        <p>Live data from the system — updates automatically as data changes</p>
+    </section>
+
+    <div class="reports-wrap">
+
+        <!-- Export buttons -->
+        <div style="margin-bottom: 20px;">
+            <button class="export-btn" onclick="exportCSV('applications')">⬇️ Export Applications CSV</button>
+            <button class="export-btn" onclick="exportCSV('students')">⬇️ Export Students CSV</button>
+            <button class="export-btn" onclick="exportCSV('logs')">⬇️ Export Logs CSV</button>
+        </div>
+
+        <!-- Summary tiles -->
+        <div class="stat-grid">
+            <div class="stat-tile"><h2 id="rStudents">0</h2><p>Students</p></div>
+            <div class="stat-tile"><h2 id="rEmployers">0</h2><p>Employers</p></div>
+            <div class="stat-tile"><h2 id="rInternships">0</h2><p>Internships</p></div>
+            <div class="stat-tile"><h2 id="rApps">0</h2><p>Applications</p></div>
+            <div class="stat-tile"><h2 id="rHired">0</h2><p>Hired</p></div>
+            <div class="stat-tile"><h2 id="rCompleted">0</h2><p>Completed</p></div>
+            <div class="stat-tile"><h2 id="rLogs">0</h2><p>Weekly Logs</p></div>
+            <div class="stat-tile"><h2 id="rPlacementRate">0%</h2><p>Placement Rate</p></div>
+        </div>
+
+
+        <!-- Placement Rate by Course -->
+        <p class="section-title">📊 Placement Rate by Course</p>
+        <table class="rep">
+            <thead><tr><th>Course</th><th>Students</th><th>Applications</th><th>Hired</th><th>Placement Rate</th></tr></thead>
+            <tbody id="coursePlacementTable"></tbody>
+        </table>
+
+
+        <!-- Time to Place -->
+        <p class="section-title">⏱ Time-to-Place</p>
+        <p style="font-size:13px;color:#666;margin-bottom:10px;">
+            Approximate time from registration to receiving a hire offer, shown per student.
+        </p>
+        <table class="rep">
+            <thead><tr><th>Student</th><th>Course</th><th>Applications</th><th>Status</th></tr></thead>
+            <tbody id="timeToPlaceTable"></tbody>
+        </table>
+
+
+        <!-- Employer Engagement -->
+        <p class="section-title">🏢 Employer Engagement</p>
+        <table class="rep">
+            <thead><tr><th>Employer</th><th>Listings Posted</th><th>Applications Received</th><th>Hired</th><th>Offers Issued</th></tr></thead>
+            <tbody id="employerEngagementTable"></tbody>
+        </table>
+
+
+        <!-- Application Status Breakdown -->
+        <p class="section-title">📋 Application Status Breakdown</p>
+        <table class="rep">
+            <thead><tr><th>Status</th><th>Count</th><th>% of Total</th></tr></thead>
+            <tbody id="statusBreakdown"></tbody>
+        </table>
+
+
+        <!-- Student Progress and Completion -->
+        <p class="section-title">🎓 Student Progress Summary</p>
+        <table class="rep">
+            <thead><tr><th>Student</th><th>Course</th><th>Logs Submitted</th><th>Applications</th><th>Status</th></tr></thead>
+            <tbody id="progressSummaryTable"></tbody>
+        </table>
+
+
+        <!-- All Applications -->
+        <p class="section-title">📄 All Applications</p>
+        <table class="rep">
+            <thead><tr><th>Student</th><th>Internship</th><th>Company</th><th>Status</th><th>Date</th></tr></thead>
+            <tbody id="appsTable"></tbody>
+        </table>
+
+
+        <!-- Weekly Logs -->
+        <p class="section-title">📝 Weekly Logs</p>
+        <table class="rep">
+            <thead><tr><th>Student</th><th>Company</th><th>Week</th><th>Hours</th><th>Date</th></tr></thead>
+            <tbody id="logsTable"></tbody>
+        </table>
+
+    </div>
+
+    <footer><p>© 2026 IIPMS | Reports</p></footer>
+
+    <script src="{% static 'js/auth.js' %}"></script>
+    <script src="{% static 'js/data.js' %}"></script>
+    <script>
+
+        // Check login
+        
+        if (user === null || user.role !== "officer") {
+            ;
+        }
+
+        // Run all report sections when page loads
+        loadReports();
+
+        function loadReports() {
+            var allUsers    = JSON.parse(localStorage.getItem("users")) || [];
+            var internships = getAllInternships();
+            var postedOnly  = JSON.parse(localStorage.getItem("postedInternships")) || [];
+            var apps        = getAllApplications();
+            var logs        = getAllWeeklyLogs();
+            var offers      = getAllOffers();
+
+            // Split users by role
+            var students  = [];
+            var employers = [];
+            for (var i = 0; i < allUsers.length; i++) {
+                if (allUsers[i].role === "student")  students.push(allUsers[i]);
+                if (allUsers[i].role === "employer") employers.push(allUsers[i]);
+            }
+
+            // Count hired and completed
+            var hiredCount     = 0;
+            var completedCount = 0;
+            for (var h = 0; h < apps.length; h++) {
+                if (apps[h].status === "Hired")     hiredCount++;
+                if (apps[h].status === "Completed") completedCount++;
+            }
+
+            // Overall placement rate = hired / students * 100
+            var placementRate = 0;
+            if (students.length > 0) {
+                placementRate = Math.round(((hiredCount + completedCount) / students.length) * 100);
+            }
+
+            // Fill summary tiles
+            document.getElementById("rStudents").textContent      = students.length;
+            document.getElementById("rEmployers").textContent     = employers.length;
+            document.getElementById("rInternships").textContent   = internships.length;
+            document.getElementById("rApps").textContent          = apps.length;
+            document.getElementById("rHired").textContent         = hiredCount;
+            document.getElementById("rCompleted").textContent     = completedCount;
+            document.getElementById("rLogs").textContent          = logs.length;
+            document.getElementById("rPlacementRate").textContent = placementRate + "%";
+
+
+            // ── Placement Rate by Course ──
+            // Group students by course and count who got hired
+            var courseMap = {};
+
+            for (var c = 0; c < students.length; c++) {
+                var course = students[c].course || "Not Specified";
+                if (courseMap[course] === undefined) {
+                    courseMap[course] = { students: 0, applications: 0, hired: 0 };
+                }
+                courseMap[course].students++;
+            }
+
+            for (var a = 0; a < apps.length; a++) {
+                var app = apps[a];
+                // Find the student's course
+                var studentCourse = "Not Specified";
+                for (var sc = 0; sc < students.length; sc++) {
+                    if (students[sc].id == app.userId) {
+                        studentCourse = students[sc].course || "Not Specified";
+                    }
+                }
+                if (courseMap[studentCourse] !== undefined) {
+                    courseMap[studentCourse].applications++;
+                    if (app.status === "Hired" || app.status === "Completed") {
+                        courseMap[studentCourse].hired++;
+                    }
+                }
+            }
+
+            var courseTable = document.getElementById("coursePlacementTable");
+            courseTable.innerHTML = "";
+            var courseNames = Object.keys(courseMap);
+
+            if (courseNames.length === 0) {
+                courseTable.innerHTML = '<tr><td colspan="5" class="no-data">No student data yet.</td></tr>';
+            } else {
+                for (var cn = 0; cn < courseNames.length; cn++) {
+                    var courseName = courseNames[cn];
+                    var cd         = courseMap[courseName];
+                    var rate       = cd.students > 0 ? Math.round((cd.hired / cd.students) * 100) + "%" : "0%";
+
+                    courseTable.innerHTML +=
+                        '<tr>' +
+                        '<td>' + courseName + '</td>' +
+                        '<td>' + cd.students + '</td>' +
+                        '<td>' + cd.applications + '</td>' +
+                        '<td>' + cd.hired + '</td>' +
+                        '<td><strong>' + rate + '</strong></td>' +
+                        '</tr>';
+                }
+            }
+
+
+            // ── Time to Place ──
+            // Show each student's application count and current best status
+            var ttp = document.getElementById("timeToPlaceTable");
+            ttp.innerHTML = "";
+
+            if (students.length === 0) {
+                ttp.innerHTML = '<tr><td colspan="4" class="no-data">No students yet.</td></tr>';
+            } else {
+                for (var s = 0; s < students.length; s++) {
+                    var stu = students[s];
+
+                    // Find the best status for this student
+                    var bestStatus = "No applications";
+                    var appCountForStu = 0;
+
+                    for (var ap = 0; ap < apps.length; ap++) {
+                        if (apps[ap].userId == stu.id) {
+                            appCountForStu++;
+                            var st = apps[ap].status;
+                            if (st === "Completed")          bestStatus = "Completed";
+                            else if (st === "Hired" && bestStatus !== "Completed") bestStatus = "Hired";
+                            else if (st === "Interview Scheduled" && bestStatus !== "Hired" && bestStatus !== "Completed") bestStatus = "Interview Scheduled";
+                            else if (st === "Pending" && bestStatus === "No applications") bestStatus = "Pending";
+                        }
+                    }
+
+                    var bdg = "b-pending";
+                    if (bestStatus === "Completed")          bdg = "b-complete";
+                    if (bestStatus === "Hired")              bdg = "b-hired";
+                    if (bestStatus === "Interview Scheduled") bdg = "b-iv";
+                    if (bestStatus === "No applications")    bdg = "b-other";
+
+                    ttp.innerHTML +=
+                        '<tr>' +
+                        '<td><strong>' + stu.firstName + ' ' + stu.lastName + '</strong></td>' +
+                        '<td>' + (stu.course || "—") + '</td>' +
+                        '<td>' + appCountForStu + '</td>' +
+                        '<td><span class="badge-sm ' + bdg + '">' + bestStatus + '</span></td>' +
+                        '</tr>';
+                }
+            }
+
+
+            // ── Employer Engagement ──
+            var empTable = document.getElementById("employerEngagementTable");
+            empTable.innerHTML = "";
+
+            if (employers.length === 0) {
+                empTable.innerHTML = '<tr><td colspan="5" class="no-data">No employers yet.</td></tr>';
+            } else {
+                for (var e = 0; e < employers.length; e++) {
+                    var emp        = employers[e];
+                    var empCompany = emp.company || (emp.firstName + " " + emp.lastName);
+
+                    // Count listings
+                    var listingCount = 0;
+                    for (var li = 0; li < postedOnly.length; li++) {
+                        if (postedOnly[li].employerId == emp.id) listingCount++;
+                    }
+
+                    // Count applications received
+                    var empJobIds = [];
+                    for (var ej = 0; ej < postedOnly.length; ej++) {
+                        if (postedOnly[ej].employerId == emp.id) empJobIds.push(postedOnly[ej].id);
+                    }
+                    var appReceived = 0;
+                    var empHired    = 0;
+                    for (var ea = 0; ea < apps.length; ea++) {
+                        for (var eid = 0; eid < empJobIds.length; eid++) {
+                            if (apps[ea].internshipId === empJobIds[eid]) {
+                                appReceived++;
+                                if (apps[ea].status === "Hired" || apps[ea].status === "Completed") {
+                                    empHired++;
+                                }
+                            }
+                        }
+                    }
+
+                    // Count offers
+                    var offerCount = 0;
+                    for (var of2 = 0; of2 < offers.length; of2++) {
+                        if (offers[of2].employerId == emp.id) offerCount++;
+                    }
+
+                    empTable.innerHTML +=
+                        '<tr>' +
+                        '<td><strong>' + empCompany + '</strong></td>' +
+                        '<td>' + listingCount + '</td>' +
+                        '<td>' + appReceived + '</td>' +
+                        '<td>' + empHired + '</td>' +
+                        '<td>' + offerCount + '</td>' +
+                        '</tr>';
+                }
+            }
+
+
+            // ── Status Breakdown ──
+            var statusNames  = ["Pending", "Interview Scheduled", "Shortlisted", "Hired", "Rejected", "Completed"];
+            var statusCounts = [0, 0, 0, 0, 0, 0];
+
+            for (var sb = 0; sb < apps.length; sb++) {
+                for (var sn = 0; sn < statusNames.length; sn++) {
+                    if (apps[sb].status === statusNames[sn]) {
+                        statusCounts[sn]++;
+                    }
+                }
+            }
+
+            var bdgClasses = ["b-pending", "b-iv", "b-other", "b-hired", "b-rejected", "b-complete"];
+            var statusTable = document.getElementById("statusBreakdown");
+            statusTable.innerHTML = "";
+
+            if (apps.length === 0) {
+                statusTable.innerHTML = '<tr><td colspan="3" class="no-data">No applications yet.</td></tr>';
+            } else {
+                for (var t = 0; t < statusNames.length; t++) {
+                    var pct = Math.round((statusCounts[t] / apps.length) * 100);
+                    statusTable.innerHTML +=
+                        '<tr>' +
+                        '<td><span class="badge-sm ' + bdgClasses[t] + '">' + statusNames[t] + '</span></td>' +
+                        '<td>' + statusCounts[t] + '</td>' +
+                        '<td>' + pct + '%</td>' +
+                        '</tr>';
+                }
+            }
+
+
+            // ── Student Progress Summary ──
+            var progressTable = document.getElementById("progressSummaryTable");
+            progressTable.innerHTML = "";
+
+            if (students.length === 0) {
+                progressTable.innerHTML = '<tr><td colspan="5" class="no-data">No students yet.</td></tr>';
+            } else {
+                for (var ps = 0; ps < students.length; ps++) {
+                    var pstu = students[ps];
+
+                    // Count logs
+                    var logCount = 0;
+                    for (var pl = 0; pl < logs.length; pl++) {
+                        if (logs[pl].userId == pstu.id) logCount++;
+                    }
+
+                    // Count apps and best status
+                    var pAppCount  = 0;
+                    var pBestStatus = "Not started";
+                    for (var pa = 0; pa < apps.length; pa++) {
+                        if (apps[pa].userId == pstu.id) {
+                            pAppCount++;
+                            if (apps[pa].status === "Completed")     pBestStatus = "Completed";
+                            else if (apps[pa].status === "Hired" && pBestStatus !== "Completed") pBestStatus = "Hired";
+                        }
+                    }
+
+                    var pbdg = "b-other";
+                    if (pBestStatus === "Completed") pbdg = "b-complete";
+                    if (pBestStatus === "Hired")     pbdg = "b-hired";
+
+                    progressTable.innerHTML +=
+                        '<tr>' +
+                        '<td><strong>' + pstu.firstName + ' ' + pstu.lastName + '</strong></td>' +
+                        '<td>' + (pstu.course || "—") + '</td>' +
+                        '<td>' + logCount + '</td>' +
+                        '<td>' + pAppCount + '</td>' +
+                        '<td><span class="badge-sm ' + pbdg + '">' + pBestStatus + '</span></td>' +
+                        '</tr>';
+                }
+            }
+
+
+            // ── All Applications table ──
+            var appsTable = document.getElementById("appsTable");
+            appsTable.innerHTML = "";
+
+            if (apps.length === 0) {
+                appsTable.innerHTML = '<tr><td colspan="5" class="no-data">No applications.</td></tr>';
+            } else {
+                for (var atp = apps.length - 1; atp >= 0; atp--) {
+                    var app    = apps[atp];
+                    var abdg   = "b-pending";
+                    if (app.status === "Interview Scheduled") abdg = "b-iv";
+                    if (app.status === "Hired")               abdg = "b-hired";
+                    if (app.status === "Rejected")            abdg = "b-rejected";
+                    if (app.status === "Completed")           abdg = "b-complete";
+                    if (app.status === "Shortlisted")         abdg = "b-other";
+
+                    appsTable.innerHTML +=
+                        '<tr>' +
+                        '<td>' + app.userName + '</td>' +
+                        '<td>' + app.internshipTitle + '</td>' +
+                        '<td>' + (app.companyName || "—") + '</td>' +
+                        '<td><span class="badge-sm ' + abdg + '">' + app.status + '</span></td>' +
+                        '<td>' + app.date + '</td>' +
+                        '</tr>';
+                }
+            }
+
+
+            // ── Logs table ──
+            var logsTable = document.getElementById("logsTable");
+            logsTable.innerHTML = "";
+
+            if (logs.length === 0) {
+                logsTable.innerHTML = '<tr><td colspan="5" class="no-data">No logs yet.</td></tr>';
+            } else {
+                for (var lt = logs.length - 1; lt >= 0; lt--) {
+                    var log = logs[lt];
+                    logsTable.innerHTML +=
+                        '<tr>' +
+                        '<td>' + log.userName + '</td>' +
+                        '<td>' + log.companyName + '</td>' +
+                        '<td>Week ' + log.weekNumber + '</td>' +
+                        '<td>' + log.hoursWorked + ' hrs</td>' +
+                        '<td>' + log.date + '</td>' +
+                        '</tr>';
+                }
+            }
+        }
+
+
+        // ── EXPORT CSV ──
+        // Converts data to a CSV file and downloads it to the user's computer
+        function exportCSV(dataType) {
+            var rows    = [];
+            var filename = "";
+
+            if (dataType === "applications") {
+                filename = "iipms_applications.csv";
+                rows.push(["Student", "Email", "Internship", "Company", "Status", "Date Applied"]);
+                var apps = getAllApplications();
+                for (var i = 0; i < apps.length; i++) {
+                    var a = apps[i];
+                    rows.push([a.userName, a.userEmail, a.internshipTitle, a.companyName || "—", a.status, a.date]);
+                }
+            }
+
+            if (dataType === "students") {
+                filename = "iipms_students.csv";
+                rows.push(["First Name", "Last Name", "Email", "Course", "WAM", "Skills", "Availability", "Work Type", "Location Pref"]);
+                var allUsers = JSON.parse(localStorage.getItem("users")) || [];
+                for (var j = 0; j < allUsers.length; j++) {
+                    if (allUsers[j].role === "student") {
+                        var s = allUsers[j];
+                        rows.push([s.firstName, s.lastName, s.email, s.course || "—", s.wam || "—", s.skills || "—", s.availability || "—", s.workType || "—", s.locationPref || "—"]);
+                    }
+                }
+            }
+
+            if (dataType === "logs") {
+                filename = "iipms_weekly_logs.csv";
+                rows.push(["Student", "Company", "Week", "Hours Worked", "Tasks", "Challenges", "Reflection", "Date"]);
+                var logs = getAllWeeklyLogs();
+                for (var k = 0; k < logs.length; k++) {
+                    var log = logs[k];
+                    rows.push([log.userName, log.companyName, log.weekNumber, log.hoursWorked, log.tasks, log.challenges || "", log.reflection, log.date]);
+                }
+            }
+
+            // Build the CSV text
+            var csvText = "";
+            for (var r = 0; r < rows.length; r++) {
+                var row = rows[r];
+                var line = "";
+                for (var col = 0; col < row.length; col++) {
+                    // Wrap each value in quotes to handle commas inside values
+                    var value = String(row[col]).replace(/"/g, '""');
+                    if (col > 0) line += ",";
+                    line += '"' + value + '"';
+                }
+                csvText += line + "\n";
+            }
+
+            // Create a download link and click it automatically
+            var blob    = new Blob([csvText], { type: "text/csv" });
+            var url     = URL.createObjectURL(blob);
+            var link    = document.createElement("a");
+            link.href   = url;
+            link.download = filename;
+            link.click();
+
+            // Clean up
+            URL.revokeObjectURL(url);
+        }
+
+    </script>
+
+<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
+</body>
+</html>

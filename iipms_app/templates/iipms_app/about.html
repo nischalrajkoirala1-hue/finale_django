@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - IIPMS</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <!-- Django flash messages (success/error banners) -->
+    {% if messages %}
+    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
+        {% for message in messages %}
+        <div style="background:{% if message.tags == 'success' %}#dcfce7{% elif message.tags == 'danger' %}#fee2e2{% else %}#fef9c3{% endif %};
+                    border-radius:8px;padding:12px 16px;margin-bottom:8px;
+                    color:{% if message.tags == 'success' %}#15803d{% elif message.tags == 'danger' %}#b91c1c{% else %}#a16207{% endif %};
+                    font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+    <header class="navbar">
+        <div class="logo">IIPMS</div>
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}">Home</a></li>
+
+                <li><a href="{% url 'about' %}">About</a></li>
+                <li><a href="{% url 'login' %}" class="btn">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="page-title">
+        <h1>About IIPMS</h1>
+        <p>Learn more about the Intelligent Internship Placement Management System</p>
+    </section>
+
+    <section class="about-page">
+        <div class="about-page-container">
+            <div class="about-page-image">
+                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80" alt="Internship team meeting">
+            </div>
+
+            <div class="about-page-text">
+                <h2>Who We Are</h2>
+                <p>
+                    The Intelligent Internship Placement Management System (IIPMS) is a front-end web prototype
+                    designed to simplify and improve the internship placement process for students, employers,
+                    and placement officers.
+                </p>
+
+                <h2>What the System Does</h2>
+                <p>
+                    The system brings important internship activities into one place. Students can explore
+                    internship opportunities, apply for roles, check matched recommendations, and submit weekly
+                    progress logs. Employers can post internship listings and review applicants, while placement
+                    officers can monitor internship activity and view reports.
+                </p>
+
+                <h2>Project Goal</h2>
+                <p>
+                    The goal of this project is to provide a clean and user-friendly prototype that demonstrates
+                    how internship workflows can be organized in a simple digital platform using HTML, CSS,
+                    and JavaScript.
+                </p>
+
+                <h2>Key Features</h2>
+                <ul class="about-list">
+                    <li>Student dashboard for applications and tracking</li>
+                    <li>Employer dashboard for posting internship roles</li>
+                    <li>Placement officer dashboard for monitoring progress</li>
+                    <li>Internship matching page based on student skills</li>
+                    <li>Weekly progress log submission</li>
+                    <li>Reports and analytics overview</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2026 IIPMS | About Page</p>
+    </footer>
+
+<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
+</body>
+</html>

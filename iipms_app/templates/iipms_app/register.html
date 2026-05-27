@@ -1,0 +1,216 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - IIPMS</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .error-box { background:#fee2e2;border:1.5px solid #ef4444;color:#b91c1c;padding:10px 14px;border-radius:8px;font-size:14px;margin-top:12px; }
+        .field-errors { color:#b91c1c;font-size:13px;margin-top:4px; }
+        .skill-pills { display:flex;flex-wrap:wrap;gap:6px;margin-top:6px; }
+        .skill-pill { background:#e8ecff;color:#4f6ef7;padding:4px 10px;border-radius:12px;font-size:12px;cursor:pointer;border:1.5px solid transparent; }
+        .skill-pill.selected { background:#4f6ef7;color:white; }
+        #skillsInput { width:100%;padding:12px 14px;border:1px solid #cbd5e1;border-radius:6px;font-size:15px;outline:none; }
+        .role-section { display:none; }
+        .role-section.active { display:block; }
+    </style>
+</head>
+<body>
+    <!-- Django flash messages (success/error banners) -->
+    {% if messages %}
+    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
+        {% for message in messages %}
+        <div style="background:{% if message.tags == 'success' %}#dcfce7{% elif message.tags == 'danger' %}#fee2e2{% else %}#fef9c3{% endif %};
+                    border-radius:8px;padding:12px 16px;margin-bottom:8px;
+                    color:{% if message.tags == 'success' %}#15803d{% elif message.tags == 'danger' %}#b91c1c{% else %}#a16207{% endif %};
+                    font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+    <header class="navbar">
+        <div class="logo">IIPMS</div>
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}">Home</a></li>
+                <li><a href="{% url 'about' %}">About</a></li>
+                <li><a href="{% url 'login' %}" class="btn">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="register-section">
+        <div class="register-container">
+            <div class="register-form-box">
+                <h1>Create Account</h1>
+                <p class="subtitle">Join IIPMS to start your internship journey</p>
+
+                {% if form.errors %}
+                    <div class="error-box">
+                        Please fix the errors below.
+                    </div>
+                {% endif %}
+
+                {% for message in messages %}
+                    <div class="error-box">{{ message }}</div>
+                {% endfor %}
+
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>First Name *</label>
+                            {{ form.first_name }}
+                            {% if form.first_name.errors %}<div class="field-errors">{{ form.first_name.errors }}</div>{% endif %}
+                        </div>
+                        <div class="input-group">
+                            <label>Last Name *</label>
+                            {{ form.last_name }}
+                            {% if form.last_name.errors %}<div class="field-errors">{{ form.last_name.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Email Address *</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}<div class="field-errors">{{ form.email.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="input-group">
+                        <label>Register As *</label>
+                        {{ form.role }}
+                        {% if form.role.errors %}<div class="field-errors">{{ form.role.errors }}</div>{% endif %}
+                    </div>
+
+                    <!-- Student fields -->
+                    <div class="role-section" id="section-student">
+                        <div class="input-group">
+                            <label>Course / Degree</label>
+                            {{ form.course }}
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>WAM / GPA</label>
+                                {{ form.wam }}
+                            </div>
+                            <div class="input-group">
+                                <label>Availability</label>
+                                {{ form.availability }}
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Your Skills (comma-separated)</label>
+                            {{ form.skills }}
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>Preferred Industry</label>
+                                {{ form.industry_pref }}
+                            </div>
+                            <div class="input-group">
+                                <label>Work Type</label>
+                                {{ form.work_type }}
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Location Preference</label>
+                            {{ form.location_pref }}
+                        </div>
+                        <div class="input-group">
+                            <label>Upload CV (optional)</label>
+                            {{ form.cv_file }}
+                        </div>
+                    </div>
+
+                    <!-- Employer fields -->
+                    <div class="role-section" id="section-employer">
+                        <div class="input-group">
+                            <label>Company Name</label>
+                            {{ form.company_name }}
+                        </div>
+                        <div class="input-row">
+                            <div class="input-group">
+                                <label>Industry</label>
+                                {{ form.emp_industry }}
+                            </div>
+                            <div class="input-group">
+                                <label>ABN</label>
+                                {{ form.abn }}
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Website</label>
+                            {{ form.website }}
+                        </div>
+                    </div>
+
+                    <!-- Supervisor fields -->
+                    <div class="role-section" id="section-supervisor">
+                        <div class="input-group">
+                            <label>University</label>
+                            {{ form.university }}
+                        </div>
+                        <div class="input-group">
+                            <label>Department</label>
+                            {{ form.department }}
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Profile Photo (optional)</label>
+                        {{ form.photo }}
+                    </div>
+
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label>Password *</label>
+                            {{ form.password1 }}
+                            {% if form.password1.errors %}<div class="field-errors">{{ form.password1.errors }}</div>{% endif %}
+                        </div>
+                        <div class="input-group">
+                            <label>Confirm Password *</label>
+                            {{ form.password2 }}
+                            {% if form.password2.errors %}<div class="field-errors">{{ form.password2.errors }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <button type="submit" class="register-btn">Create Account</button>
+
+                    <p class="register-text" style="text-align:center;margin-top:14px;">
+                        Already have an account? <a href="{% url 'login' %}">Sign in</a>
+                    </p>
+                </form>
+            </div>
+
+            <div class="register-image">
+                <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=800&q=80" alt="Register">
+            </div>
+        </div>
+    </section>
+
+    <footer><p>© 2026 IIPMS | Registration</p></footer>
+
+    <script>
+        // Show/hide role-specific fields when role dropdown changes
+        var roleSelect = document.querySelector('[name="role"]');
+        function toggleRoleFields() {
+            document.querySelectorAll('.role-section').forEach(function(el) { el.classList.remove('active'); });
+            var val = roleSelect.value;
+            if (val === 'student')    document.getElementById('section-student').classList.add('active');
+            if (val === 'employer')   document.getElementById('section-employer').classList.add('active');
+            if (val === 'supervisor') document.getElementById('section-supervisor').classList.add('active');
+        }
+        if (roleSelect) {
+            roleSelect.addEventListener('change', toggleRoleFields);
+            toggleRoleFields();
+        }
+    </script>
+<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
+</body>
+</html>

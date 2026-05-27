@@ -1,0 +1,357 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IIPMS - Internship Management System</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        /* Feature cards lift up when hovered */
+        .feature-box {
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: 2px solid transparent;
+        }
+
+        .feature-box:hover {
+            transform: translateY(-5px);
+            border: 2px solid #4f6ef7;
+        }
+
+        /* The "Learn More" button inside each card */
+        .feature-box .learn-btn {
+            background-color: #4f6ef7;
+            color: white;
+            border: none;
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* Dark background behind the popup */
+        .popup-bg {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Show the popup when class "show" is added */
+        .popup-bg.show {
+            display: flex;
+        }
+
+        /* The white popup box */
+        .popup-box {
+            background-color: white;
+            border-radius: 14px;
+            max-width: 520px;
+            width: 90%;
+            overflow: hidden;
+        }
+
+        /* Coloured header at top of popup */
+        .popup-header {
+            background: linear-gradient(135deg, #4f6ef7, #7c94ff);
+            color: white;
+            padding: 24px 28px;
+        }
+
+        .popup-header h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .popup-header p {
+            font-size: 13px;
+            opacity: 0.85;
+        }
+
+        /* Popup body with list of features */
+        .popup-body {
+            padding: 20px 28px 26px;
+        }
+
+        .popup-body ul {
+            list-style: none;
+            margin-bottom: 20px;
+            padding: 0;
+        }
+
+        .popup-body ul li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eeeeee;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .popup-body ul li::before {
+            content: "✓ ";
+            color: #4f6ef7;
+            font-weight: bold;
+        }
+
+        .popup-body .action-btn {
+            padding: 10px 22px;
+            background-color: #4f6ef7;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .popup-body .close-btn {
+            padding: 10px 22px;
+            background-color: #eeeeee;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <!-- Django flash messages (success/error banners) -->
+    {% if messages %}
+    <div style="position:fixed;top:70px;right:20px;z-index:9999;width:320px;">
+        {% for message in messages %}
+        <div style="background:{% if message.tags == 'success' %}#dcfce7{% elif message.tags == 'danger' %}#fee2e2{% else %}#fef9c3{% endif %};
+                    border-radius:8px;padding:12px 16px;margin-bottom:8px;
+                    color:{% if message.tags == 'success' %}#15803d{% elif message.tags == 'danger' %}#b91c1c{% else %}#a16207{% endif %};
+                    font-size:14px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.1);">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="logo">IIPMS</div>
+        <nav>
+            <ul>
+                <li><a href="{% url 'home' %}">Home</a></li>
+                <li><a href="{% url 'about' %}">About</a></li>
+                <li><a href="{% url 'login' %}" class="btn">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Smart Internship Placement System</h1>
+            <p>Connecting students with the right opportunities using intelligent matching.</p>
+            <a href="{% url 'register' %}" class="cta-btn">Get Started</a>
+        </div>
+    </section>
+
+    <!-- FEATURES SECTION -->
+    <section class="features">
+        <h2>Key Features</h2>
+        <p class="subtitle">Click any card to see what it includes</p>
+
+        <div class="feature-container">
+
+            <!-- Card 1: Student Portal -->
+            <div class="feature-box" onclick="openPopup('student')">
+                <img src="https://static-blog.onlyoffice.com/wp-content/uploads/2023/08/04132048/onlyoffice-what-is-student-portal-in-2023.png" alt="Student">
+                <h3>Student Portal</h3>
+                <p>Create profile, apply for internships, and track your progress.</p>
+                <button class="learn-btn">Learn More →</button>
+            </div>
+
+            <!-- Card 2: Employer Portal -->
+            <div class="feature-box" onclick="openPopup('employer')">
+                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=600&q=80" alt="Employer">
+                <h3>Employer Portal</h3>
+                <p>Post internships, review applicants, and hire top talent.</p>
+                <button class="learn-btn">Learn More →</button>
+            </div>
+
+            <!-- Card 3: Smart Matching -->
+            <div class="feature-box" onclick="openPopup('matching')">
+                <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=600&q=80" alt="Matching">
+                <h3>Smart Matching</h3>
+                <p>Automatically match students with internships based on skills.</p>
+                <button class="learn-btn">Learn More →</button>
+            </div>
+
+            <!-- Card 4: Officer Dashboard -->
+            <div class="feature-box" onclick="openPopup('officer')">
+                <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=600&q=80" alt="Officer">
+                <h3>Officer Dashboard</h3>
+                <p>Monitor activity, track student progress, and generate reports.</p>
+                <button class="learn-btn">Learn More →</button>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- ABOUT SECTION -->
+    <section class="about">
+        <div class="about-container">
+            <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=600&q=80" alt="Team">
+            <div class="about-text">
+                <h2>About the System</h2>
+                <p>
+                    The Intelligent Internship Placement Management System (IIPMS) simplifies
+                    internship processes by connecting students, employers, and universities in one platform.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>© 2026 IIPMS | Designed for Capstone Project</p>
+    </footer>
+
+
+    <!-- POPUP (one popup used for all 4 cards) -->
+    <div class="popup-bg" id="featurePopup">
+        <div class="popup-box">
+            <div class="popup-header">
+                <h2 id="popupTitle">Title</h2>
+                <p id="popupSubtitle">Subtitle</p>
+            </div>
+            <div class="popup-body">
+                <ul id="popupList">
+                    <!-- List items added by JavaScript -->
+                </ul>
+                <button class="action-btn" onclick="goToRegister()">Get Started</button>
+                <button class="close-btn" onclick="closePopup()">Close</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+
+        // Data for each popup
+        // Each card has a title, subtitle, and list of features
+
+        var popupData = {
+
+            student: {
+                title: "Student Portal",
+                subtitle: "Everything you need to land your internship",
+                items: [
+                    "Upload a profile photo when you register",
+                    "Add your skills from a list or type your own",
+                    "See how well your skills match each internship",
+                    "Apply for internships directly from the dashboard",
+                    "View all your submitted applications and their status",
+                    "Submit weekly progress logs to your placement officer",
+                    "Edit and update your skills at any time",
+                    "Get recommended matches based on your skill set"
+                ]
+            },
+
+            employer: {
+                title: "Employer Portal",
+                subtitle: "Find and manage the best student talent",
+                items: [
+                    "Register your company with name and industry",
+                    "Post new internship listings from your dashboard",
+                    "Choose required skills by clicking from a list",
+                    "Add your own custom skills not in the preset list",
+                    "Your posted jobs appear instantly on the listings page",
+                    "See all applications received for your jobs",
+                    "View applicant names, emails and skills",
+                    "Track how many people have applied to each role"
+                ]
+            },
+
+            matching: {
+                title: "Smart Matching System",
+                subtitle: "Skill-based internship recommendations",
+                items: [
+                    "Compares your skills against each job's requirements",
+                    "Shows a match score as a percentage for every job",
+                    "Green bar means strong match (70% or above)",
+                    "Orange bar means partial match (40 to 69%)",
+                    "Red bar means low match (below 40%)",
+                    "Match score updates instantly when you edit your skills",
+                    "Helps you know which jobs to focus on",
+                    "Also available on the dedicated Matches page"
+                ]
+            },
+
+            officer: {
+                title: "Officer Dashboard",
+                subtitle: "Full oversight of all internship activity",
+                items: [
+                    "See total number of students, internships, and applications",
+                    "Log each student's current stage in the placement process",
+                    "Stages include: Applied, Interview, Offer, Placed, Withdrawn",
+                    "Progress table shows all students with newest entries first",
+                    "Next Steps tab shows action items based on live system data",
+                    "Add your own custom next step tasks and mark them done",
+                    "Approvals tab lists all registered students and pending applications",
+                    "System alerts warn you when students are falling behind"
+                ]
+            }
+
+        };
+
+        // The link the Get Started button will use
+        var currentLink = "/register/";
+
+
+        // Open the popup for the clicked card
+        function openPopup(cardName) {
+            var data = popupData[cardName];
+
+            // Fill in the popup content
+            document.getElementById("popupTitle").textContent    = data.title;
+            document.getElementById("popupSubtitle").textContent = data.subtitle;
+
+            // Build the list
+            var list = document.getElementById("popupList");
+            list.innerHTML = "";
+            for (var i = 0; i < data.items.length; i++) {
+                list.innerHTML += "<li>" + data.items[i] + "</li>";
+            }
+
+            // Show the popup
+            document.getElementById("featurePopup").classList.add("show");
+        }
+
+
+        // Close the popup
+        function closePopup() {
+            document.getElementById("featurePopup").classList.remove("show");
+        }
+
+
+        // Close popup when clicking the dark background
+        document.getElementById("featurePopup").addEventListener("click", function(e) {
+            if (e.target === this) {
+                closePopup();
+            }
+        });
+
+
+        // Go to register page when Get Started is clicked
+        function goToRegister() {
+            window.location.href = "/register/";
+        }
+
+    </script>
+
+<form id="logout-form" method="POST" action="{% url 'logout' %}">{% csrf_token %}</form>
+</body>
+</html>
