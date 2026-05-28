@@ -144,4 +144,4 @@ MESSAGE_TAGS = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-CSRF_TRUSTED_ORIGINS = ["https://iipms-django-production.up.railway.app"]
+CSRF_TRUSTED_ORIGINS = ["https://iipms-django-production.up.railway.app", "https://finaledjango-production.up.railway.app", "http://127.0.0.1:8000"]
